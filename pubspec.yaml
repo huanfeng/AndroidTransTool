@@ -10,8 +10,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   cupertino_icons: ^1.0.2
+  file_picker: ^6.1.1
+  chinese_font_library: ^1.0.2
+  window_manager: ^0.3.7
+  shared_preferences: ^2.0.6
 
 dev_dependencies:
   flutter_test:
