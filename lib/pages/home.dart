@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:android_trans_tool/data/project.dart';
 import 'package:android_trans_tool/utils/picker_utils.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +18,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  int selectedResDirIndex = -1;
 
   void _incrementCounter() {
     setState(() {
@@ -24,6 +27,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   final Project _project = Project("New Project");
+  final ResDirInfo _currentResInfo = ResDirInfo();
 
   Future<void> _showProjectSettingDialog() async {
     return showDialog<void>(
@@ -68,6 +72,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     title: "请选择安卓工程目录",
                     cb: (dir) {
                       _project.loadFrom(dir);
+                      _currentResInfo.reset();
+                      selectedResDirIndex = -1;
                       setState(() {});
                     });
               }),
@@ -90,14 +96,56 @@ class _MyHomePageState extends State<MyHomePage> {
         left: DecoratedBox(
             decoration: BoxDecoration(
                 border: Border.all(color: Colors.redAccent, width: 1)),
-            child: Center(
-              child: ListView.builder(itemBuilder: (context, index) {
+            child: Column(children: [
+              DecoratedBox(
+                  decoration: const BoxDecoration(color: Colors.greenAccent),
+                  child: Text("共找到${_project.resDirs.length}个res目录")),
+              Expanded(child: ListView.builder(itemBuilder: (context, index) {
                 if (index < _project.resDirs.length) {
-                  return ListTile(title: Text(_project.resDirs[index]));
+                  final children = <Widget>[];
+                  children.add(ListTile(
+                      title: Text(_project.resDirs[index]),
+                      selected: index == selectedResDirIndex,
+                      onTap: () {
+                        if (selectedResDirIndex != index) {
+                          setState(() {
+                            _currentResInfo.load(_project.getResDirPath(index));
+                            selectedResDirIndex = index;
+                          });
+                        }
+                      }));
+                  if (index < _project.resDirs.length - 1) {
+                    children.add(const Divider());
+                  }
+                  return Column(
+                    children: children,
+                  );
                 }
                 return null;
-              }),
-            )),
+              })),
+              DecoratedBox(
+                  decoration: const BoxDecoration(color: Colors.greenAccent),
+                  child: Text(
+                      "已选择: ${selectedResDirIndex >= 0 ? _project.resDirs.elementAtOrNull(selectedResDirIndex) ?? "" : ""}")),
+              Expanded(child: ListView.builder(itemBuilder: (context, index) {
+                if (index < _currentResInfo.xmlFileNames.length) {
+                  final children = <Widget>[];
+                  children.add(ListTile(
+                      title:
+                          Text(_currentResInfo.xmlFileNames.elementAt(index)),
+                      onTap: () {
+                        log("onTap: index=$index, name=${_currentResInfo.xmlFileNames.elementAt(index)}");
+                      }));
+                  if (index < _currentResInfo.xmlFileNames.length - 1) {
+                    children.add(const Divider());
+                  }
+                  return Column(
+                    children: children,
+                  );
+                }
+                return null;
+              })),
+            ])),
         right: DecoratedBox(
             decoration: BoxDecoration(
                 border: Border.all(color: Colors.greenAccent, width: 1)),
@@ -117,7 +165,8 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Row(children: [Text("项目路径: ${_project.projectDir}")])),
         bottom: Align(
             alignment: Alignment.topLeft,
-            child: Row(children: [Text("状态栏: ${_project.projectDir}")])),
+            child:
+                Row(children: [Text("状态栏: selectIndex=$selectedResDirIndex")])),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
