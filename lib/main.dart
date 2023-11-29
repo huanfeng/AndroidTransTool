@@ -1,3 +1,4 @@
+import 'package:android_trans_tool/pages/project_setting.dart';
 import 'package:chinese_font_library/chinese_font_library.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:window_manager/window_manager.dart';
 import 'config.dart';
 import 'pages/settings.dart';
 import 'pages/home.dart';
+import 'utils/touch_utils.dart';
 
 const appTitle = "Android Trans Tool";
 
@@ -55,6 +57,7 @@ class MyApp extends StatelessWidget {
         Locale('zh', 'CN'), // 中文简体
         //其他Locales
       ],
+      scrollBehavior: MyCustomScrollBehavior(),
       title: appTitle,
       initialRoute: "/",
       theme: ThemeData(
@@ -64,6 +67,7 @@ class MyApp extends StatelessWidget {
       routes: {
         "/": (context) => const MyHomePage(title: appTitle), //注册首页路由
         "setting": (context) => const SettingPage(),
+        "project_setting": (context) => const ProjectSettingPage(),
       },
     );
   }
