@@ -1,9 +1,10 @@
 import 'dart:developer';
 
-import 'package:android_trans_tool/data/project.dart';
-import 'package:android_trans_tool/utils/picker_utils.dart';
 import 'package:flutter/material.dart';
 
+import '../data/language.dart';
+import '../data/project.dart';
+import '../utils/picker_utils.dart';
 import '../widgets/panel_layout.dart';
 import 'project_setting.dart';
 
@@ -17,17 +18,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
   int selectedResDirIndex = -1;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
+  int selectedXmlFileIndex = -1;
+  int selectedXmlLine = -1;
 
   final Project _project = Project("New Project");
   final ResDirInfo _currentResInfo = ResDirInfo();
+  final XmlStringData _xmlData = XmlStringData();
 
   Future<void> _showProjectSettingDialog() async {
     return showDialog<void>(
@@ -56,6 +53,54 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  List<DataColumn> dataColumns() {
+    final list = <DataColumn>[
+      const DataColumn(label: Text('ID')),
+      const DataColumn(label: Text('可翻译')),
+    ];
+
+    Languages.values.forEach((key, value) => list
+        .add(DataColumn(label: Text(key.isEmpty ? value : "$value($key)"))));
+
+    return list;
+  }
+
+  List<DataRow> dataRows() {
+    final list = <DataRow>[];
+    for (final (idx, it) in _xmlData.items.values.indexed) {
+      final cells = <DataCell>[];
+      cells.add(DataCell(Container(
+          constraints: const BoxConstraints(maxWidth: 150),
+          child: Text(it.name))));
+      cells.add(DataCell(Container(
+          constraints: const BoxConstraints(maxWidth: 30),
+          child: Text(it.translatable ? "yes" : "no"))));
+      Languages.values.forEach((key, value) {
+        final v = it.valueMap[key] ?? "";
+        cells.add(DataCell(DecoratedBox(
+          decoration: BoxDecoration(
+              border: v.isNotEmpty || !it.translatable
+                  ? null
+                  : Border.all(color: Colors.red)),
+          child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 100),
+              child: SizedBox.expand(child: Text(v))),
+        )));
+      });
+      list.add(DataRow(
+        cells: cells,
+        selected: idx == selectedXmlLine,
+        onSelectChanged: (value) {
+          if (value == true) {
+            selectedXmlLine = idx;
+            setState(() {});
+          }
+        },
+      ));
+    }
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,6 +119,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       _project.loadFrom(dir);
                       _currentResInfo.reset();
                       selectedResDirIndex = -1;
+                      selectedXmlFileIndex = -1;
                       setState(() {});
                     });
               }),
@@ -111,6 +157,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           setState(() {
                             _currentResInfo.load(_project.getResDirPath(index));
                             selectedResDirIndex = index;
+                            selectedXmlFileIndex = -1;
                           });
                         }
                       }));
@@ -133,8 +180,15 @@ class _MyHomePageState extends State<MyHomePage> {
                   children.add(ListTile(
                       title:
                           Text(_currentResInfo.xmlFileNames.elementAt(index)),
+                      selected: index == selectedXmlFileIndex,
                       onTap: () {
-                        log("onTap: index=$index, name=${_currentResInfo.xmlFileNames.elementAt(index)}");
+                        selectedXmlFileIndex = index;
+                        final xmlFileName =
+                            _currentResInfo.xmlFileNames.elementAt(index);
+                        log("onTap: index=$index, name=$xmlFileName");
+                        _xmlData.setFileName(xmlFileName);
+                        _xmlData.load(_currentResInfo);
+                        setState(() {});
                       }));
                   if (index < _currentResInfo.xmlFileNames.length - 1) {
                     children.add(const Divider());
@@ -147,29 +201,44 @@ class _MyHomePageState extends State<MyHomePage> {
               })),
             ])),
         right: DecoratedBox(
-            decoration: BoxDecoration(
-                border: Border.all(color: Colors.greenAccent, width: 1)),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    '$_counter',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                ],
-              ),
-            )),
+          decoration: BoxDecoration(
+              border: Border.all(color: Colors.greenAccent, width: 1)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                  child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            showCheckboxColumn: false,
+                            headingRowColor: MaterialStateColor.resolveWith(
+                                (states) => Colors.greenAccent),
+                            headingTextStyle: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                            showBottomBorder: true,
+                            columns: dataColumns(),
+                            rows: dataRows(),
+                          ))))
+            ],
+          ),
+        ),
         top: Align(
             alignment: Alignment.topLeft,
             child: Row(children: [Text("项目路径: ${_project.projectDir}")])),
         bottom: Align(
             alignment: Alignment.topLeft,
-            child:
-                Row(children: [Text("状态栏: selectIndex=$selectedResDirIndex")])),
+            child: Row(children: [
+              Text(
+                  "状态栏: resDir=$selectedResDirIndex, xmlFile=$selectedXmlFileIndex, xmlName=${_xmlData.fileName}"),
+            ])),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
+        onPressed: () {},
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ),

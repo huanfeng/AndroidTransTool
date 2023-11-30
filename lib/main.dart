@@ -1,4 +1,3 @@
-import 'package:android_trans_tool/pages/project_setting.dart';
 import 'package:chinese_font_library/chinese_font_library.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,8 +5,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'config.dart';
-import 'pages/settings.dart';
 import 'pages/home.dart';
+import 'pages/project_setting.dart';
+import 'pages/settings.dart';
 import 'utils/touch_utils.dart';
 
 const appTitle = "Android Trans Tool";

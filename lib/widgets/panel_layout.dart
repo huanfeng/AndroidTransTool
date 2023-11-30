@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 // 左边是一个列表，右边是Page的布局
 class SimplePanelLayout extends StatefulWidget {

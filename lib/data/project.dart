@@ -1,7 +1,16 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+
 import 'package:path/path.dart' as path;
+import 'package:xml/xml.dart';
+
+import '../utils/string_utils.dart';
+
+const valuesDirName = "values";
+const valuesDirPrefix = "values-";
+const stringsFilePrefix = "strings";
+const arraysFilePrefix = "arrays";
 
 class Project {
   String name = "";
@@ -75,6 +84,7 @@ class ResDirInfo {
     xmlFileNames.clear();
 
     scanResValuesDir(resDir);
+    valuesDirs.sort();
   }
 
   void scanResValuesDir(String dir) {
@@ -82,9 +92,11 @@ class ResDirInfo {
     for (final item in list) {
       if (item is Directory) {
         final dirname = path.basename(item.path);
-        if (dirname == "values") {
-          valuesDirs.add(dirname);
+        if (dirname == valuesDirName) {
+          valuesDirs.insert(0, dirname);
           _scanStringsXmlFiles(item.path);
+        } else if (dirname.startsWith(valuesDirPrefix)) {
+          valuesDirs.insert(0, dirname);
         }
       }
     }
@@ -95,7 +107,8 @@ class ResDirInfo {
     for (final item in fileList) {
       if (item is File) {
         final name = path.basename(item.path);
-        if (name.startsWith("strings") || name.startsWith("arrays")) {
+        if (name.startsWith(stringsFilePrefix) ||
+            name.startsWith(arraysFilePrefix)) {
           log("scanStringsXmlFiles: add xml file=${item.path}");
           xmlFileNames.add(name);
         }
@@ -107,5 +120,63 @@ class ResDirInfo {
     dir = "";
     valuesDirs.clear();
     xmlFileNames.clear();
+  }
+}
+
+class StringItem {
+  // Key
+  String name = "";
+
+  bool translatable = true;
+
+  // 语言对应的值
+  Map<String, String> valueMap = {};
+
+  StringItem(this.name, {this.translatable = true});
+}
+
+class XmlStringData {
+  // 文件名称
+  String fileName = "";
+
+  // name -> Item
+  Map<String, StringItem> items = {};
+
+  XmlStringData setFileName(String name) {
+    fileName = name;
+    return this;
+  }
+
+  void load(ResDirInfo res) {
+    items.clear();
+    log("load: res=$res, fileName=$fileName");
+
+    for (final subDir in res.valuesDirs) {
+      final file = File(path.join(res.dir, subDir, fileName));
+      if (file.existsSync()) {
+        final xmlText = file.readAsStringSync();
+        final doc = XmlDocument.parse(xmlText);
+        final lang = subDir.startsWith(valuesDirPrefix)
+            ? subDir.substring(valuesDirPrefix.length)
+            : subDir.substring(valuesDirName.length);
+        log("lang:[$lang]");
+        final strings = doc.findAllElements("string");
+        for (final it in strings) {
+          final name = it.getAttribute("name") ?? "";
+          final translatable = !(it.getAttribute("translatable") == "false");
+          final value = it.firstChild?.value ?? "";
+          log("  name:$name, translatable=$translatable, value=$value");
+          if (items.containsKey(name)) {
+            final si = items[name]!;
+            si.valueMap[lang] = value.trimDQ();
+          } else {
+            final si = StringItem(name, translatable: translatable);
+            si.valueMap[lang] = value.trimDQ();
+            items[name] = si;
+          }
+        }
+        log("lang:[$lang] rootElement: ${doc.rootElement.name}");
+      }
+    }
   }
 }

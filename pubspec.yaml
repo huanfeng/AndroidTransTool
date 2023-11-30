@@ -21,6 +21,7 @@ dependencies:
   path: ^1.8.0
   flutter_fancy_tree_view: ^1.4.1
   provider: ^6.1.1
+  xml: ^6.4.2
 
 dev_dependencies:
   flutter_test:
