@@ -6,6 +6,7 @@ import 'package:android_trans_tool/data/language.dart';
 import 'package:path/path.dart' as path;
 import 'package:xml/xml.dart';
 
+import '../config.dart';
 import '../utils/string_utils.dart';
 
 const valuesDirName = "values";
@@ -78,6 +79,11 @@ class ResDirInfo {
   String dir = "";
   List<String> valuesDirs = [];
   Set<String> xmlFileNames = {};
+
+  @override
+  String toString() {
+    return 'ResDirInfo{dir: $dir}';
+  }
 
   void load(String resDir) {
     dir = resDir;
@@ -174,7 +180,9 @@ class XmlStringData {
         final name = it.getAttribute("name") ?? "";
         final translatable = !(it.getAttribute("translatable") == "false");
         final value = it.firstChild?.value ?? "";
-        log("  name:$name, translatable=$translatable, value=$value");
+        if (Config.debugv.value) {
+          log("  name:$name, translatable=$translatable, value=$value");
+        }
         if (_itemsMap.containsKey(name)) {
           final si = _itemsMap[name]!;
           si.valueMap[lang] = value.trimDQ();
@@ -188,8 +196,14 @@ class XmlStringData {
     }
   }
 
-  void load(ResDirInfo res) {
+  void clear() {
     items.clear();
+    _itemsMap.clear();
+    translatedItems.clear();
+  }
+
+  void load(ResDirInfo res) {
+    clear();
     log("load: res=$res, fileName=$fileName");
 
     // 需要保证 valuesDirs 的顺序, 默认的需要在最前, 不然会影响生成后的顺序
@@ -259,11 +273,11 @@ class XmlStringData {
     return document;
   }
 
-  void saveToDir(String resDir) {
-    final file = File(path.join(resDir, fileName));
-
-    final langList = <Language>[];
-
+  void saveToDir(String resDir, Language lang) {
+    log("saveToDir: resDir=$resDir, lang=$lang, valueDirName=${lang.valuesDirName}");
+    final file = File(path.join(resDir, lang.valuesDirName, fileName));
+    final doc = buildStringXml(lang);
+    file.writeAsStringSync(doc.toXmlString(pretty: true, indent: "    "));
     // final doc = XmlDocument.parse(
     //     '<?xml version="1.0" encoding="utf-8"?>\n<resources></resources>');
     // final root = doc.rootElement;

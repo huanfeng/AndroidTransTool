@@ -203,14 +203,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               title: Text(_project.resDirs[index]),
                               selected: index == selectedResDirIndex,
                               onTap: () {
-                                if (selectedResDirIndex != index) {
-                                  setState(() {
-                                    _currentResInfo
-                                        .load(_project.getResDirPath(index));
-                                    selectedResDirIndex = index;
-                                    selectedXmlFileIndex = -1;
-                                  });
-                                }
+                                onTapResDir(index);
                               }));
                           if (index < _project.resDirs.length - 1) {
                             children.add(const Divider());
@@ -239,13 +232,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   .elementAt(index)),
                               selected: index == selectedXmlFileIndex,
                               onTap: () {
-                                selectedXmlFileIndex = index;
-                                final xmlFileName = _currentResInfo.xmlFileNames
-                                    .elementAt(index);
-                                log("onTap: index=$index, name=$xmlFileName");
-                                _xmlData.setFileName(xmlFileName);
-                                _xmlData.load(_currentResInfo);
-                                setState(() {});
+                                onTapXmlFile(index);
                               }));
                           if (index < _currentResInfo.xmlFileNames.length - 1) {
                             children.add(const Divider());
@@ -324,15 +311,8 @@ class _MyHomePageState extends State<MyHomePage> {
             alignment: Alignment.centerLeft,
             child: Row(children: [
               Text(
-                  "状态栏: resDir=$selectedResDirIndex, xmlFile=$selectedXmlFileIndex, xmlName=${_xmlData.fileName}"),
+                  "状态栏: resDirIndex=$selectedResDirIndex, xmlFileIndex=$selectedXmlFileIndex, xmlName=${_xmlData.fileName}"),
             ])),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          testTrans();
-        },
-        tooltip: 'Test',
-        child: const Icon(Icons.add),
       ),
     );
   }
@@ -355,6 +335,27 @@ class _MyHomePageState extends State<MyHomePage> {
     ]);
     _openAI.transTexts(request).listen((event) {
       log("${event ?? "null"}");
+    });
+  }
+
+  void onTapResDir(int index) {
+    if (selectedResDirIndex != index) {
+      setState(() {
+        _currentResInfo.load(_project.getResDirPath(index));
+        selectedResDirIndex = index;
+        selectedXmlFileIndex = -1;
+      });
+    }
+  }
+
+  void onTapXmlFile(int index) {
+    setState(() {
+      selectedXmlFileIndex = index;
+      final xmlFileName = _currentResInfo.xmlFileNames.elementAt(index);
+      log("onTapXmlFile: index=$index, name=$xmlFileName");
+      _xmlData.setFileName(xmlFileName);
+      _xmlData.load(_currentResInfo);
+      log("onTapXmlFile: load result: ${_xmlData.items.length}");
     });
   }
 
@@ -406,6 +407,9 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
 
-    _xmlData.saveToDir(_currentResInfo.dir);
+    final langList = _xmlData.getTranslatedLanguages();
+    for (final i in langList) {
+      _xmlData.saveToDir(_currentResInfo.dir, i);
+    }
   }
 }

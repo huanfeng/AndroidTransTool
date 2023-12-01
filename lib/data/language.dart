@@ -2,7 +2,7 @@ enum Language {
   def("", "默认(英文)", "Default(English)"),
   cn("zh-rCN", "简体中文", "Simplified Chinese"),
   cnHk("zh-rHK", "繁体中文", "Traditional Chinese"),
-  cnTw("zh-rTW", "繁体中文", "Traditional Chinese"),
+  // cnTw("zh-rTW", "繁体中文", "Traditional Chinese"),
   ar("ar", "阿拉伯语", "Arabic"),
   de("de", "德语", "German"),
   fr("fr", "法语", "French"),
@@ -23,6 +23,13 @@ enum Language {
   @override
   String toString() {
     return 'Language{code: $code, cnName: $cnName}';
+  }
+
+  String get valuesDirName {
+    if (code.isEmpty) {
+      return "values";
+    }
+    return "values-$code";
   }
 
   static final _map = <String, Language>{};
