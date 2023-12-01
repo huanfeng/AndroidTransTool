@@ -176,78 +176,84 @@ class _MyHomePageState extends State<MyHomePage> {
         //     decoration: BoxDecoration(color: Colors.blue.withAlpha(50)),
         //     alignment: Alignment.centerLeft,
         //     child: Row(children: [Text("项目路径: ${_project.projectDir}")])),
-        left: Column(children: [
-          Container(
-              alignment: Alignment.center,
-              height: 30,
-              decoration: const BoxDecoration(color: Colors.greenAccent),
-              child: Text("资源目录: ${_project.resDirs.length}")),
-          Expanded(
-              child: ListView.builder(
-                  itemCount: _project.resDirs.length,
-                  itemBuilder: (context, index) {
-                    if (index < _project.resDirs.length) {
-                      final children = <Widget>[];
-                      children.add(ListTile(
-                          title: Text(_project.resDirs[index]),
-                          selected: index == selectedResDirIndex,
-                          onTap: () {
-                            if (selectedResDirIndex != index) {
-                              setState(() {
-                                _currentResInfo
-                                    .load(_project.getResDirPath(index));
-                                selectedResDirIndex = index;
-                                selectedXmlFileIndex = -1;
-                              });
-                            }
-                          }));
-                      if (index < _project.resDirs.length - 1) {
-                        children.add(const Divider());
-                      }
-                      return Column(
-                        children: children,
-                      );
-                    }
-                    return null;
-                  })),
-          Container(
-              alignment: Alignment.center,
-              height: 30,
-              decoration: const BoxDecoration(color: Colors.greenAccent),
-              child: Text(
-                  "资源文件: ${selectedResDirIndex >= 0 ? _project.resDirs.elementAtOrNull(selectedResDirIndex) ?? "" : ""}")),
-          Expanded(
-              child: ListView.builder(
-                  itemCount: _currentResInfo.xmlFileNames.length,
-                  itemBuilder: (context, index) {
-                    if (index < _currentResInfo.xmlFileNames.length) {
-                      final children = <Widget>[];
-                      children.add(ListTile(
-                          title: Text(
-                              _currentResInfo.xmlFileNames.elementAt(index)),
-                          selected: index == selectedXmlFileIndex,
-                          onTap: () {
-                            selectedXmlFileIndex = index;
-                            final xmlFileName =
-                                _currentResInfo.xmlFileNames.elementAt(index);
-                            log("onTap: index=$index, name=$xmlFileName");
-                            _xmlData.setFileName(xmlFileName);
-                            _xmlData.load(_currentResInfo);
-                            setState(() {});
-                          }));
-                      if (index < _currentResInfo.xmlFileNames.length - 1) {
-                        children.add(const Divider());
-                      }
-                      return Column(
-                        children: children,
-                      );
-                    }
-                    return null;
-                  })),
-        ]),
+        left: Container(
+            decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withAlpha(80)),
+            child: Column(children: [
+              Container(
+                  alignment: Alignment.center,
+                  height: 30,
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.secondaryContainer),
+                  child: Text("资源目录: ${_project.resDirs.length}")),
+              Expanded(
+                  child: ListView.builder(
+                      itemCount: _project.resDirs.length,
+                      itemBuilder: (context, index) {
+                        if (index < _project.resDirs.length) {
+                          final children = <Widget>[];
+                          children.add(ListTile(
+                              title: Text(_project.resDirs[index]),
+                              selected: index == selectedResDirIndex,
+                              onTap: () {
+                                if (selectedResDirIndex != index) {
+                                  setState(() {
+                                    _currentResInfo
+                                        .load(_project.getResDirPath(index));
+                                    selectedResDirIndex = index;
+                                    selectedXmlFileIndex = -1;
+                                  });
+                                }
+                              }));
+                          if (index < _project.resDirs.length - 1) {
+                            children.add(const Divider());
+                          }
+                          return Column(
+                            children: children,
+                          );
+                        }
+                        return null;
+                      })),
+              Container(
+                  alignment: Alignment.center,
+                  height: 30,
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.secondaryContainer),
+                  child: Text(
+                      "资源文件: ${selectedResDirIndex >= 0 ? _project.resDirs.elementAtOrNull(selectedResDirIndex) ?? "" : ""}")),
+              Expanded(
+                  child: ListView.builder(
+                      itemCount: _currentResInfo.xmlFileNames.length,
+                      itemBuilder: (context, index) {
+                        if (index < _currentResInfo.xmlFileNames.length) {
+                          final children = <Widget>[];
+                          children.add(ListTile(
+                              title: Text(_currentResInfo.xmlFileNames
+                                  .elementAt(index)),
+                              selected: index == selectedXmlFileIndex,
+                              onTap: () {
+                                selectedXmlFileIndex = index;
+                                final xmlFileName = _currentResInfo.xmlFileNames
+                                    .elementAt(index);
+                                log("onTap: index=$index, name=$xmlFileName");
+                                _xmlData.setFileName(xmlFileName);
+                                _xmlData.load(_currentResInfo);
+                                setState(() {});
+                              }));
+                          if (index < _currentResInfo.xmlFileNames.length - 1) {
+                            children.add(const Divider());
+                          }
+                          return Column(
+                            children: children,
+                          );
+                        }
+                        return null;
+                      })),
+            ])),
         right: Container(
-          decoration: BoxDecoration(
-              border: Border.all(color: Colors.greenAccent, width: 1)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,10 +288,14 @@ class _MyHomePageState extends State<MyHomePage> {
                             showCheckboxColumn: false,
                             columnSpacing: 20,
                             headingRowColor: MaterialStateColor.resolveWith(
-                                (states) => Colors.greenAccent),
-                            headingTextStyle: const TextStyle(
+                                (states) => Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer),
+                            headingTextStyle: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
                             ),
                             showBottomBorder: true,
                             columns: dataColumns(),
@@ -297,7 +307,8 @@ class _MyHomePageState extends State<MyHomePage> {
         bottom: Container(
             height: 30,
             padding: const EdgeInsets.only(left: 10, right: 10),
-            decoration: BoxDecoration(color: Colors.blue.withAlpha(50)),
+            decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondaryContainer),
             alignment: Alignment.centerLeft,
             child: Row(children: [
               Text(
