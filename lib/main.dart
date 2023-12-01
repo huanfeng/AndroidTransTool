@@ -65,7 +65,7 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           // 修改拖动条加宽, 常显示
           scrollbarTheme: ScrollbarThemeData(
-            thickness: MaterialStateProperty.all(20.0),
+            thickness: MaterialStateProperty.all(16),
             thumbVisibility: MaterialStateProperty.all<bool>(true),
           )).useSystemChineseFont(Brightness.light),
       routes: {

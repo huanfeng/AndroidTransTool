@@ -123,6 +123,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final ScrollController tableVController = ScrollController();
+    final ScrollController tableHController = ScrollController();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -177,6 +180,7 @@ class _MyHomePageState extends State<MyHomePage> {
         //     alignment: Alignment.centerLeft,
         //     child: Row(children: [Text("项目路径: ${_project.projectDir}")])),
         left: Container(
+            width: 450,
             decoration: BoxDecoration(
                 color: Theme.of(context)
                     .colorScheme
@@ -280,27 +284,35 @@ class _MyHomePageState extends State<MyHomePage> {
                         }),
                   ])),
               Expanded(
-                  child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: DataTable(
-                            showCheckboxColumn: false,
-                            columnSpacing: 20,
-                            headingRowColor: MaterialStateColor.resolveWith(
-                                (states) => Theme.of(context)
-                                    .colorScheme
-                                    .primaryContainer),
-                            headingTextStyle: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onPrimaryContainer,
-                            ),
-                            showBottomBorder: true,
-                            columns: dataColumns(),
-                            rows: dataRows(),
-                          ))))
+                  child: Scrollbar(
+                      controller: tableVController,
+                      child: Scrollbar(
+                          controller: tableHController,
+                          notificationPredicate: (notify) => notify.depth == 1,
+                          child: SingleChildScrollView(
+                              controller: tableVController,
+                              scrollDirection: Axis.vertical,
+                              child: SingleChildScrollView(
+                                  controller: tableHController,
+                                  scrollDirection: Axis.horizontal,
+                                  child: DataTable(
+                                    showCheckboxColumn: false,
+                                    columnSpacing: 20,
+                                    headingRowColor:
+                                        MaterialStateColor.resolveWith(
+                                            (states) => Theme.of(context)
+                                                .colorScheme
+                                                .primaryContainer),
+                                    headingTextStyle: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimaryContainer,
+                                    ),
+                                    showBottomBorder: true,
+                                    columns: dataColumns(),
+                                    rows: dataRows(),
+                                  ))))))
             ],
           ),
         ),

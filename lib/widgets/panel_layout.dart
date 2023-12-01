@@ -30,8 +30,12 @@ class _SimplePanelLayoutState extends State<SimplePanelLayout> {
       Expanded(
           child: Row(
         children: [
-          Expanded(flex: 1, child: widget.left),
-          Expanded(flex: 3, child: widget.right)
+          Expanded(flex: 0, child: widget.left),
+          const VerticalDivider(
+            width: 2,
+            thickness: 2,
+          ),
+          Expanded(flex: 1, child: widget.right)
         ],
       )),
       if (widget.bottom != null) widget.bottom!,
