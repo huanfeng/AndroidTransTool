@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:android_trans_tool/data/language.dart';
 import 'package:path/path.dart' as path;
 import 'package:xml/xml.dart';
 
@@ -127,10 +128,11 @@ class StringItem {
   // Key
   String name = "";
 
+  // 是否可翻译, 如果标记了不可翻译, 则不进行翻译
   bool translatable = true;
 
   // 语言对应的值
-  Map<String, String> valueMap = {};
+  Map<Language, String> valueMap = {};
 
   StringItem(this.name, {this.translatable = true});
 }
@@ -139,44 +141,144 @@ class XmlStringData {
   // 文件名称
   String fileName = "";
 
-  // name -> Item
-  Map<String, StringItem> items = {};
+  // 原始文本: name -> Item
+  final List<StringItem> items = [];
+
+// Map用于快速查找
+  final Map<String, StringItem> _itemsMap = {};
+
+  // 翻译后的文本
+  final Map<String, StringItem> translatedItems = {};
 
   XmlStringData setFileName(String name) {
     fileName = name;
     return this;
   }
 
+  void _loadOneDir(String rootDir, String subDir) {
+    final file = File(path.join(rootDir, subDir, fileName));
+    if (file.existsSync()) {
+      final xmlText = file.readAsStringSync();
+      final doc = XmlDocument.parse(xmlText);
+      final langCode = subDir.startsWith(valuesDirPrefix)
+          ? subDir.substring(valuesDirPrefix.length)
+          : subDir.substring(valuesDirName.length);
+      log("lang:[$langCode]");
+      final lang = Language.fromCode(langCode);
+      if (lang == null) {
+        log("WARNING: lang:[$langCode] not found");
+        return;
+      }
+      final strings = doc.findAllElements("string");
+      for (final it in strings) {
+        final name = it.getAttribute("name") ?? "";
+        final translatable = !(it.getAttribute("translatable") == "false");
+        final value = it.firstChild?.value ?? "";
+        log("  name:$name, translatable=$translatable, value=$value");
+        if (_itemsMap.containsKey(name)) {
+          final si = _itemsMap[name]!;
+          si.valueMap[lang] = value.trimDQ();
+        } else {
+          final si = StringItem(name, translatable: translatable);
+          si.valueMap[lang] = value.trimDQ();
+          items.add(si);
+          _itemsMap[name] = si;
+        }
+      }
+    }
+  }
+
   void load(ResDirInfo res) {
     items.clear();
     log("load: res=$res, fileName=$fileName");
 
+    // 需要保证 valuesDirs 的顺序, 默认的需要在最前, 不然会影响生成后的顺序
     for (final subDir in res.valuesDirs) {
-      final file = File(path.join(res.dir, subDir, fileName));
-      if (file.existsSync()) {
-        final xmlText = file.readAsStringSync();
-        final doc = XmlDocument.parse(xmlText);
-        final lang = subDir.startsWith(valuesDirPrefix)
-            ? subDir.substring(valuesDirPrefix.length)
-            : subDir.substring(valuesDirName.length);
-        log("lang:[$lang]");
-        final strings = doc.findAllElements("string");
-        for (final it in strings) {
-          final name = it.getAttribute("name") ?? "";
-          final translatable = !(it.getAttribute("translatable") == "false");
-          final value = it.firstChild?.value ?? "";
-          log("  name:$name, translatable=$translatable, value=$value");
-          if (items.containsKey(name)) {
-            final si = items[name]!;
-            si.valueMap[lang] = value.trimDQ();
-          } else {
-            final si = StringItem(name, translatable: translatable);
-            si.valueMap[lang] = value.trimDQ();
-            items[name] = si;
-          }
+      _loadOneDir(res.dir, subDir);
+    }
+  }
+
+  StringItem? getTranslatedItem(String key) {
+    return translatedItems[key];
+  }
+
+  StringItem getOrCreateTranslatedItem(String key) {
+    if (translatedItems.containsKey(key)) {
+      return translatedItems[key]!;
+    } else {
+      final item = StringItem(key);
+      translatedItems[key] = item;
+      return item;
+    }
+  }
+
+  bool hasTranslatedData() {
+    var count = 0;
+    for (final item in translatedItems.values) {
+      count += item.valueMap.length;
+    }
+    return count > 0;
+  }
+
+  List<Language> getTranslatedLanguages() {
+    final result = <Language>[];
+    for (final item in translatedItems.values) {
+      for (final it in item.valueMap.entries) {
+        if (!result.contains(it.key)) {
+          result.add(it.key);
         }
-        log("lang:[$lang] rootElement: ${doc.rootElement.name}");
       }
     }
+    return result;
+  }
+
+  XmlDocument buildStringXml(Language lang) {
+    final b = XmlBuilder();
+    b.declaration(encoding: 'utf-8');
+    b.element('resources', nest: () {
+      // 使用这个是为了保证顺序
+      for (var it in items) {
+        final key = it.name;
+        if (!it.translatable) {
+          log("buildStringXml: ignore none translatable [$key]");
+          continue;
+        }
+        final transIt = translatedItems[key];
+        final targetText = transIt?.valueMap[lang] ?? it.valueMap[lang];
+        if (targetText == null) {
+          log("buildStringXml: ignore null text [$key]");
+          continue;
+        }
+        b.element('string', nest: () {
+          b.attribute('name', it.name);
+          b.text(targetText);
+        });
+      }
+    });
+    final document = b.buildDocument();
+    return document;
+  }
+
+  void saveToDir(String resDir) {
+    final file = File(path.join(resDir, fileName));
+
+    final langList = <Language>[];
+
+    // final doc = XmlDocument.parse(
+    //     '<?xml version="1.0" encoding="utf-8"?>\n<resources></resources>');
+    // final root = doc.rootElement;
+    // for (final item in translatedItems.values) {
+    //   final name = item.name;
+    //   final value = item.valueMap.values.first;
+    //   final translatable = item.translatable;
+    //   final node =
+    //       XmlElement(XmlName("string"), [XmlAttribute(XmlName("name"), name)]);
+    //   node.text = value;
+    //   if (!translatable) {
+    //     node.attributes.add(XmlAttribute(XmlName("translatable"), "false"));
+    //   }
+    //   root.children.add(node);
+    // }
+    // file.writeAsStringSync(doc.toXmlString(pretty: true));
   }
 }

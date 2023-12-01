@@ -61,9 +61,13 @@ class MyApp extends StatelessWidget {
       title: appTitle,
       initialRoute: "/",
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
-        useMaterial3: true,
-      ).useSystemChineseFont(Brightness.light),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
+          useMaterial3: true,
+          // 修改拖动条加宽, 常显示
+          scrollbarTheme: ScrollbarThemeData(
+            thickness: MaterialStateProperty.all(20.0),
+            thumbVisibility: MaterialStateProperty.all<bool>(true),
+          )).useSystemChineseFont(Brightness.light),
       routes: {
         "/": (context) => const MyHomePage(title: appTitle), //注册首页路由
         "setting": (context) => const SettingPage(),

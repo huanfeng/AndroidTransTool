@@ -1,16 +1,42 @@
-class Languages {
-  static final values = {
-    "": "默认(英文)",
-    "zh-rCN": "简体中文",
-    "zh-rHK": "繁体中文",
-    "ar": "阿拉伯语",
-    "de": "德语",
-    "fr": "法语",
-    "hi": "印地语",
-    "it": "意大利语",
-    "iw": "希伯来语",
-    "ja": "日语",
-    "ko": "韩语",
-    "ru": "俄语",
-  };
+enum Language {
+  def("", "默认(英文)", "Default(English)"),
+  cn("zh-rCN", "简体中文", "Simplified Chinese"),
+  cnHk("zh-rHK", "繁体中文", "Traditional Chinese"),
+  cnTw("zh-rTW", "繁体中文", "Traditional Chinese"),
+  ar("ar", "阿拉伯语", "Arabic"),
+  de("de", "德语", "German"),
+  fr("fr", "法语", "French"),
+  hi("hi", "印地语", "Hindi"),
+  it("it", "意大利语", "Italian"),
+  iw("iw", "希伯来语", "Hebrew"),
+  ja("ja", "日语", "Japanese"),
+  ko("ko", "韩语", "Korean"),
+  ru("ru", "俄语", "Russian"),
+  ;
+
+  final String code;
+  final String cnName;
+  final String enName;
+
+  const Language(this.code, this.cnName, this.enName);
+
+  @override
+  String toString() {
+    return 'Language{code: $code, cnName: $cnName}';
+  }
+
+  static final _map = <String, Language>{};
+
+  static void _genMap() {
+    for (final value in Language.values) {
+      _map[value.code] = value;
+    }
+  }
+
+  static Language? fromCode(String code) {
+    if (_map.isEmpty) {
+      _genMap();
+    }
+    return _map[code];
+  }
 }

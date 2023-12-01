@@ -22,6 +22,8 @@ dependencies:
   flutter_fancy_tree_view: ^1.4.1
   provider: ^6.1.1
   xml: ^6.4.2
+  chat_gpt_sdk:
+    path: ../flutter/chat_gpt_sdk
 
 dev_dependencies:
   flutter_test:
