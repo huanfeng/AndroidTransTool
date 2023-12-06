@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'config.dart';
+import 'global.dart';
 import 'pages/home.dart';
 import 'pages/project_setting.dart';
 import 'pages/settings.dart';
@@ -23,6 +24,8 @@ bool get isDesktop {
 }
 
 Future<void> main() async {
+  log.d("main: logPath=$logPath");
+
   await Config.init();
   Config.loadConfig();
 

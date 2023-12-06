@@ -1,11 +1,10 @@
-import 'dart:developer';
-
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data/language.dart';
+import 'global.dart';
 
 class ConfigItem<T> {
-  ConfigItem(this.key, this.defaultValue) : _value = defaultValue {}
+  ConfigItem(this.key, this.defaultValue) : _value = defaultValue;
 
   final String key;
   final T defaultValue;
@@ -14,7 +13,7 @@ class ConfigItem<T> {
   T get value => _value;
 
   set value(T value) {
-    log("ConfigItem: set $key=$value");
+    log.d("ConfigItem: set $key=$value");
     _value = value;
     if (value is String) {
       Config.gPrefs.setString(key, value);
@@ -77,11 +76,11 @@ class Config {
   }
 
   static void loadConfig() {
-    log("loadConfig start: item.size=${configs.length}");
+    log.i("loadConfig start: item.size=${configs.length}");
 
     for (final item in configs) {
       item.load();
-      log("loadConfig: ${item.key}=${item.value}");
+      log.i("loadConfig: ${item.key}=${item.value}");
     }
   }
 }

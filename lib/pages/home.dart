@@ -1,10 +1,9 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 
 import '../config.dart';
 import '../data/language.dart';
 import '../data/project.dart';
+import '../global.dart';
 import '../trans/openai.dart';
 import '../utils/picker_utils.dart';
 import '../widgets/logview.dart';
@@ -369,7 +368,7 @@ class _MyHomePageState extends State<MyHomePage> {
       "Cleaning fluid"
     ]);
     _openAI.transTexts(request).listen((event) {
-      log("${event ?? "null"}");
+      log.d("${event ?? "null"}");
     });
   }
 
@@ -387,10 +386,10 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       selectedXmlFileIndex = index;
       final xmlFileName = _currentResInfo.xmlFileNames.elementAt(index);
-      log("onTapXmlFile: index=$index, name=$xmlFileName");
+      log.d("onTapXmlFile: index=$index, name=$xmlFileName");
       _xmlData.setFileName(xmlFileName);
       _xmlData.load(_currentResInfo);
-      log("onTapXmlFile: load result: ${_xmlData.items.length}");
+      log.d("onTapXmlFile: load result: ${_xmlData.items.length}");
     });
   }
 
@@ -412,18 +411,19 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void transOneLanguage(Language lang) async {
     final needList = collectNeedTransStringsForLang(lang);
-    log("needList=$needList");
+    log.d("needList=$needList");
     if (needList.isEmpty) {
-      log("needList is empty");
+      log.d("needList is empty");
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text("没有需要翻译的内容!")));
       return;
     }
     final req = TransRequest(lang, needList.map((e) => e.$1).toList(),
         needList.map((e) => e.$2).toList());
-    _openAI.setConfig(Config.apiUrl.value, Config.apiToken.value, httpProxy: Config.httpProxy.value);
+    _openAI.setConfig(Config.apiUrl.value, Config.apiToken.value,
+        httpProxy: Config.httpProxy.value);
     _openAI.transTexts(req).listen((event) {
-      log("onResponse: $event");
+      log.d("onResponse: $event");
       if (event != null && event.strings.isNotEmpty) {
         for (var (idx, it) in event.strings.indexed) {
           final key = event.keys[idx];
@@ -437,7 +437,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void saveResult() {
     if (!_xmlData.hasTranslatedData()) {
-      log("saveResult is empty");
+      log.d("saveResult is empty");
       showMessage("无已翻译的内容, 无需保存!");
       return;
     }

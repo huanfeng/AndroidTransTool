@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:math' as math;
 
 import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
 
 import '../data/language.dart';
+import '../global.dart';
 
 void chatCompleteTest(String apiUrl, String apiToken) async {
   final openAI = OpenAI.instance.build(
@@ -134,14 +134,14 @@ class OpenAiTrans {
     } else {
       final text = response.choices.first.message?.content;
       if (text == null) {
-        log("Response is null");
+        log.d("Response is null");
         return null;
       }
-      log("Response text:$text");
+      log.d("Response text:$text");
       final List result = jsonDecode(text);
       final resultText = result.map((e) => e as String).toList();
       if (request.strings.length != resultText.length) {
-        log("Response text length is not equal to request");
+        log.d("Response text length is not equal to request");
         return null;
       }
       return TransResponse(request.targetLang, request.keys, resultText,

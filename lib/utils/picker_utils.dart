@@ -1,7 +1,7 @@
-import 'dart:developer';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+
+import '../global.dart';
 
 void openOneFilePicker(
     {String? title,
@@ -13,11 +13,11 @@ void openOneFilePicker(
     allowedExtensions: allowedExtensions,
     lockParentWindow: true,
   );
-  log('result=$result');
+  log.d('result=$result');
   var file = result?.files.single;
   // 打开文件选择
   if (file != null) {
-    log('filePaths=$file');
+    log.d('filePaths=$file');
     if (file.path != null) {
       cb(file.path!);
     }

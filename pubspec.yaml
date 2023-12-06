@@ -24,6 +24,7 @@ dependencies:
   xml: ^6.4.2
   chat_gpt_sdk:
     path: ../flutter/chat_gpt_sdk
+  logger: ^2.0.2+1
 
 dev_dependencies:
   flutter_test:

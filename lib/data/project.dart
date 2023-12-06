@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
 import 'package:xml/xml.dart';
 
 import '../config.dart';
+import '../global.dart';
 import '../utils/string_utils.dart';
 import 'language.dart';
 
@@ -37,7 +37,7 @@ class Project {
       if (item is Directory) {
         final name = path.basename(item.path);
         if (name == 'res') {
-          log("scanResDirs: add res dir=${item.path}");
+          log.d("scanResDirs: add res dir=${item.path}");
           result.add(item.path);
         } else if (!ignoreDirs.contains(name)) {
           scanResDirs(result, item.path);
@@ -63,7 +63,7 @@ class Project {
         final relPath = path.relative(element, from: dir);
         resDirs.add(relPath);
       }
-      log("scanResult: resDirs=$resDirs");
+      log.d("scanResult: resDirs=$resDirs");
     }
   }
 
@@ -116,7 +116,7 @@ class ResDirInfo {
         final name = path.basename(item.path);
         if (name.startsWith(stringsFilePrefix) ||
             name.startsWith(arraysFilePrefix)) {
-          log("scanStringsXmlFiles: add xml file=${item.path}");
+          log.d("scanStringsXmlFiles: add xml file=${item.path}");
           xmlFileNames.add(name);
         }
       }
@@ -169,10 +169,10 @@ class XmlStringData {
       final langCode = subDir.startsWith(valuesDirPrefix)
           ? subDir.substring(valuesDirPrefix.length)
           : subDir.substring(valuesDirName.length);
-      log("lang:[$langCode]");
+      log.d("lang:[$langCode]");
       final lang = Language.fromCode(langCode);
       if (lang == null) {
-        log("WARNING: lang:[$langCode] not found");
+        log.w("WARNING: lang:[$langCode] not found");
         return;
       }
       final strings = doc.findAllElements("string");
@@ -181,7 +181,7 @@ class XmlStringData {
         final translatable = !(it.getAttribute("translatable") == "false");
         final value = it.firstChild?.value ?? "";
         if (Config.debugv.value) {
-          log("  name:$name, translatable=$translatable, value=$value");
+          log.d("  name:$name, translatable=$translatable, value=$value");
         }
         if (_itemsMap.containsKey(name)) {
           final si = _itemsMap[name]!;
@@ -204,7 +204,7 @@ class XmlStringData {
 
   void load(ResDirInfo res) {
     clear();
-    log("load: res=$res, fileName=$fileName");
+    log.d("load: res=$res, fileName=$fileName");
 
     // 需要保证 valuesDirs 的顺序, 默认的需要在最前, 不然会影响生成后的顺序
     for (final subDir in res.valuesDirs) {
@@ -254,13 +254,13 @@ class XmlStringData {
       for (var it in items) {
         final key = it.name;
         if (!it.translatable) {
-          log("buildStringXml: ignore none translatable [$key]");
+          log.d("buildStringXml: ignore none translatable [$key]");
           continue;
         }
         final transIt = translatedItems[key];
         final targetText = transIt?.valueMap[lang] ?? it.valueMap[lang];
         if (targetText == null) {
-          log("buildStringXml: ignore null text [$key]");
+          log.i("buildStringXml: ignore null text [$key]");
           continue;
         }
         b.element('string', nest: () {
@@ -274,7 +274,8 @@ class XmlStringData {
   }
 
   void saveToDir(String resDir, Language lang) {
-    log("saveToDir: resDir=$resDir, lang=$lang, valueDirName=${lang.valuesDirName}");
+    log.d(
+        "saveToDir: resDir=$resDir, lang=$lang, valueDirName=${lang.valuesDirName}");
     final file = File(path.join(resDir, lang.valuesDirName, fileName));
     final parent = file.parent;
     if (!parent.existsSync()) {
