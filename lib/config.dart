@@ -2,10 +2,10 @@ import 'dart:developer';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'data/language.dart';
+
 class ConfigItem<T> {
-  ConfigItem(this.key, this.defaultValue) : _value = defaultValue {
-    Config.configs.add(this);
-  }
+  ConfigItem(this.key, this.defaultValue) : _value = defaultValue {}
 
   final String key;
   final T defaultValue;
@@ -24,6 +24,8 @@ class ConfigItem<T> {
       Config.gPrefs.setInt(key, value);
     } else if (value is double) {
       Config.gPrefs.setDouble(key, value);
+    } else if (value is List<String>) {
+      Config.gPrefs.setStringList(key, value);
     } else {
       throw Exception("ConfigItem: not support type: ${value.runtimeType}");
     }
@@ -42,6 +44,9 @@ class ConfigItem<T> {
     } else if (_value is double) {
       final v = Config.gPrefs.getDouble(key) ?? 0;
       _value = v as T;
+    } else if (_value is List<String>) {
+      final v = Config.gPrefs.getStringList(key) ?? [];
+      _value = v as T;
     } else {
       throw Exception("ConfigItem: not support type: ${_value.runtimeType}");
     }
@@ -50,19 +55,33 @@ class ConfigItem<T> {
 
 class Config {
   static late SharedPreferences gPrefs;
-  static List<ConfigItem> configs = [];
+
+  static final apiToken = ConfigItem("api_token", "");
+  static final apiUrl = ConfigItem("apiUrl", "");
+  static final debugv = ConfigItem("debugv", false);
+  static final enabledLanguages = ConfigItem("enable_language",
+      Language.supportedLanguages.map((e) => e.code).toList());
+
+  static final httpProxy = ConfigItem("http_proxy", "");
+
+  static final List<ConfigItem> configs = [
+    apiToken,
+    apiUrl,
+    debugv,
+    enabledLanguages,
+    httpProxy,
+  ];
 
   static Future<void> init() async {
     gPrefs = await SharedPreferences.getInstance();
   }
 
   static void loadConfig() {
+    log("loadConfig start: item.size=${configs.length}");
+
     for (final item in configs) {
       item.load();
+      log("loadConfig: ${item.key}=${item.value}");
     }
   }
-
-  static final apiToken = ConfigItem("api_token", "");
-  static final apiUrl = ConfigItem("apiUrl", "");
-  static final debugv = ConfigItem("debugv", false);
 }

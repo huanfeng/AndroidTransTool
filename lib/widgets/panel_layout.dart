@@ -7,6 +7,7 @@ class SimplePanelLayout extends StatefulWidget {
       required this.left,
       required this.right,
       this.top,
+      this.statusBar,
       this.bottom});
 
   final Widget left;
@@ -16,6 +17,9 @@ class SimplePanelLayout extends StatefulWidget {
   final Widget? top;
 
   // 用于状态栏
+  final Widget? statusBar;
+
+  // 用于日志框
   final Widget? bottom;
 
   @override
@@ -39,6 +43,7 @@ class _SimplePanelLayoutState extends State<SimplePanelLayout> {
         ],
       )),
       if (widget.bottom != null) widget.bottom!,
+      if (widget.statusBar != null) widget.statusBar!,
     ]);
   }
 }

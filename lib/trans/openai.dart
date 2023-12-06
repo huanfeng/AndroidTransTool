@@ -7,14 +7,10 @@ import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
 
 import '../data/language.dart';
 
-const _token = "ak-JPfYBxjYgKpVQ7WnE4nFmQuhN3Jl5zC0jdX4CuClFBWUSoFK";
-
-const _apkUrl = "https://api.nextweb.fun/openai/v1/";
-
-void chatCompleteTest() async {
+void chatCompleteTest(String apiUrl, String apiToken) async {
   final openAI = OpenAI.instance.build(
-      token: _token,
-      apiUrl: _apkUrl,
+      token: apiToken,
+      apiUrl: apiUrl,
       baseOption: HttpSetup(receiveTimeout: const Duration(seconds: 10)),
       enableLog: true);
 
@@ -84,20 +80,46 @@ const transPromoteCN =
     "我希望你充当语言翻译器。我会发送一段Json格式的文本，你需要将其中的文本内容翻译为TARGET_LANG，一定要是TARGET_LANG。不要写任何解释或其他文字，你的回复需要保持Json的格式, 只修改需要翻译的内容。第一句是: ";
 
 class OpenAiTrans {
-  late OpenAI _openAI;
+  OpenAI? _openAI;
   var _isInit = false;
 
-  // 第次最多翻译20项
-  var maxPreRequestCount = 20;
+  // 第次最多翻译30项
+  var maxPreRequestCount = 30;
 
-  void init() {
+  var _apiUrl = "";
+  var _apiToken = "";
+  var _httpProxy = "";
+
+  void _ensureInit() {
     if (_isInit) return;
+    if (_apiUrl.isEmpty) {
+      throw Exception("apiUrl is empty");
+    }
+    if (_apiToken.isEmpty) {
+      throw Exception("apiToken is empty");
+    }
     _openAI = OpenAI.instance.build(
-        token: _token,
-        apiUrl: _apkUrl,
-        baseOption: HttpSetup(receiveTimeout: const Duration(seconds: 10)),
+        token: _apiToken,
+        apiUrl: _apiUrl,
+        baseOption: HttpSetup(
+            receiveTimeout: const Duration(seconds: 10),
+            proxy: _httpProxy.isNotEmpty ? "PROXY $_httpProxy" : ""),
         enableLog: true);
     _isInit = true;
+  }
+
+  OpenAI _ensureOpenAi() {
+    _ensureInit();
+    return _openAI!;
+  }
+
+  void setConfig(String url, String token, {String httpProxy = ""}) {
+    if (_apiUrl != url || _apiToken != token || _httpProxy != httpProxy) {
+      _apiUrl = url;
+      _apiToken = token;
+      _httpProxy = httpProxy;
+      _isInit = false;
+    }
   }
 
   Future<TransResponse?> transOne(TransData request) async {
@@ -105,7 +127,8 @@ class OpenAiTrans {
         messages: [Messages(role: Role.user, content: request.genPromote())],
         maxToken: 2000,
         model: GptTurboChatModel());
-    final response = await _openAI.onChatCompletion(request: chat);
+    final openAi = _ensureOpenAi();
+    final response = await openAi.onChatCompletion(request: chat);
     if (response == null) {
       return null;
     } else {

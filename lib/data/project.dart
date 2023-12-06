@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:android_trans_tool/data/language.dart';
 import 'package:path/path.dart' as path;
 import 'package:xml/xml.dart';
 
 import '../config.dart';
 import '../utils/string_utils.dart';
+import 'language.dart';
 
 const valuesDirName = "values";
 const valuesDirPrefix = "values-";
@@ -276,23 +276,11 @@ class XmlStringData {
   void saveToDir(String resDir, Language lang) {
     log("saveToDir: resDir=$resDir, lang=$lang, valueDirName=${lang.valuesDirName}");
     final file = File(path.join(resDir, lang.valuesDirName, fileName));
+    final parent = file.parent;
+    if (!parent.existsSync()) {
+      parent.createSync(recursive: true);
+    }
     final doc = buildStringXml(lang);
     file.writeAsStringSync(doc.toXmlString(pretty: true, indent: "    "));
-    // final doc = XmlDocument.parse(
-    //     '<?xml version="1.0" encoding="utf-8"?>\n<resources></resources>');
-    // final root = doc.rootElement;
-    // for (final item in translatedItems.values) {
-    //   final name = item.name;
-    //   final value = item.valueMap.values.first;
-    //   final translatable = item.translatable;
-    //   final node =
-    //       XmlElement(XmlName("string"), [XmlAttribute(XmlName("name"), name)]);
-    //   node.text = value;
-    //   if (!translatable) {
-    //     node.attributes.add(XmlAttribute(XmlName("translatable"), "false"));
-    //   }
-    //   root.children.add(node);
-    // }
-    // file.writeAsStringSync(doc.toXmlString(pretty: true));
   }
 }

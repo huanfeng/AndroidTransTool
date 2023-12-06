@@ -10,7 +10,8 @@ import 'pages/project_setting.dart';
 import 'pages/settings.dart';
 import 'utils/touch_utils.dart';
 
-const appTitle = "Android Trans Tool";
+const appVersion = "V0.1";
+const appTitle = "Android Trans Tool $appVersion";
 
 bool get isDesktop {
   if (kIsWeb) return false;

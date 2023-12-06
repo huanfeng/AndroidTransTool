@@ -2,7 +2,7 @@ enum Language {
   def("", "默认(英文)", "Default(English)"),
   cn("zh-rCN", "简体中文", "Simplified Chinese"),
   cnHk("zh-rHK", "繁体中文", "Traditional Chinese"),
-  // cnTw("zh-rTW", "繁体中文", "Traditional Chinese"),
+  cnTw("zh-rTW", "繁体中文", "Traditional Chinese"),
   ar("ar", "阿拉伯语", "Arabic"),
   de("de", "德语", "German"),
   fr("fr", "法语", "French"),
@@ -32,6 +32,10 @@ enum Language {
     return "values-$code";
   }
 
+  String get cnTitle {
+    return code.isEmpty ? cnName : "$cnName($code)";
+  }
+
   static final _map = <String, Language>{};
 
   static void _genMap() {
@@ -46,4 +50,19 @@ enum Language {
     }
     return _map[code];
   }
+
+  static List<Language> supportedLanguages = [
+    Language.def,
+    Language.cn,
+    Language.cnHk,
+    Language.ar,
+    Language.de,
+    Language.fr,
+    Language.hi,
+    Language.it,
+    Language.iw,
+    Language.ja,
+    Language.ko,
+    Language.ru,
+  ];
 }
