@@ -77,7 +77,6 @@ class Project {
 
 class ResDirInfo {
   String dir = "";
-  List<String> valuesDirs = [];
   Set<String> xmlFileNames = {};
 
   @override
@@ -87,11 +86,9 @@ class ResDirInfo {
 
   void load(String resDir) {
     dir = resDir;
-    valuesDirs.clear();
     xmlFileNames.clear();
 
     scanResValuesDir(resDir);
-    valuesDirs.sort();
   }
 
   void scanResValuesDir(String dir) {
@@ -100,11 +97,8 @@ class ResDirInfo {
       if (item is Directory) {
         final dirname = path.basename(item.path);
         if (dirname == valuesDirName) {
-          valuesDirs.insert(0, dirname);
           _scanStringsXmlFiles(item.path);
-        } else if (dirname.startsWith(valuesDirPrefix)) {
-          valuesDirs.insert(0, dirname);
-        }
+        } else if (dirname.startsWith(valuesDirPrefix)) {}
       }
     }
   }
@@ -125,7 +119,6 @@ class ResDirInfo {
 
   void reset() {
     dir = "";
-    valuesDirs.clear();
     xmlFileNames.clear();
   }
 }
@@ -169,10 +162,10 @@ class XmlStringData {
       final langCode = subDir.startsWith(valuesDirPrefix)
           ? subDir.substring(valuesDirPrefix.length)
           : subDir.substring(valuesDirName.length);
-      log.d("lang:[$langCode]");
+      log.d("_loadOneDir lang:[$langCode]");
       final lang = Language.fromCode(langCode);
       if (lang == null) {
-        log.w("WARNING: lang:[$langCode] not found");
+        log.w("_loadOneDir WARNING: lang:[$langCode] not found");
         return;
       }
       final strings = doc.findAllElements("string");
@@ -202,13 +195,13 @@ class XmlStringData {
     translatedItems.clear();
   }
 
-  void load(ResDirInfo res) {
+  void load(String resDir) {
     clear();
-    log.d("load: res=$res, fileName=$fileName");
+    log.d("load: resDir=$resDir, fileName=$fileName");
 
     // 需要保证 valuesDirs 的顺序, 默认的需要在最前, 不然会影响生成后的顺序
-    for (final subDir in res.valuesDirs) {
-      _loadOneDir(res.dir, subDir);
+    for (final lang in Language.supportedLanguages) {
+      _loadOneDir(resDir, lang.valuesDirName);
     }
   }
 
