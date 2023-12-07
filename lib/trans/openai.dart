@@ -77,14 +77,14 @@ class TransResponse extends TransData {
 }
 
 const transPromoteCN =
-    "我希望你充当语言翻译器。我会发送一段Json格式的文本，你需要将其中的文本内容翻译为TARGET_LANG，一定要是TARGET_LANG。不要写任何解释或其他文字，你的回复需要保持Json的格式, 只修改需要翻译的内容。第一句是: ";
+    "我希望你充当语言翻译器.我会发送一段Json格式的文本,你需要将其中的文本内容翻译为TARGET_LANG,一定要是TARGET_LANG.不要写任何解释或其他文字,你的回复需要保持Json的格式,只修改需要翻译的内容,如果翻译后的内容有双引号,请修改为单引号。第一句是: ";
 
 class OpenAiTrans {
   OpenAI? _openAI;
   var _isInit = false;
 
-  // 第次最多翻译30项
-  var maxPreRequestCount = 30;
+  // 第次最多翻译多少项: 太大容易太慢, 太小效率不高
+  var maxPreRequestCount = 20;
 
   var _apiUrl = "";
   var _apiToken = "";
@@ -122,10 +122,11 @@ class OpenAiTrans {
     }
   }
 
-  Future<TransResponse?> transOne(TransData request) async {
+  Future<TransResponse?> _transOne(TransData request) async {
     final chat = ChatCompleteText(
         messages: [Messages(role: Role.user, content: request.genPromote())],
         maxToken: 2000,
+        topP: 0.8,
         model: GptTurboChatModel());
     final openAi = _ensureOpenAi();
     final response = await openAi.onChatCompletion(request: chat);
@@ -149,17 +150,19 @@ class OpenAiTrans {
     }
   }
 
-  Stream<TransResponse?> transTexts(TransRequest request) async* {
+  Future<void> startTransRequest(
+      TransRequest request, Function(TransResponse?) callback) async {
+    // 拆分成小的请求进行翻译
     if (request.strings.length > maxPreRequestCount) {
       final subRequests = request.split(maxPreRequestCount);
       for (var subRequest in subRequests) {
-        final resp = await transOne(subRequest);
-        yield resp;
+        final resp = await _transOne(subRequest);
+        callback(resp);
       }
       return;
     } else {
-      final resp = await transOne(request);
-      yield resp;
+      final resp = await _transOne(request);
+      callback(resp);
     }
   }
 }

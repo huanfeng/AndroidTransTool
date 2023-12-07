@@ -19,6 +19,22 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+class TranslateProgress {
+  var working = false;
+  var totalLanguageCount = 0;
+  var currentLanguage = 0;
+  var currentLangTextCount = 0;
+  var currentLangTranslatedCount = 0;
+
+  void reset() {
+    working = false;
+    totalLanguageCount = 0;
+    currentLanguage = 0;
+    currentLangTextCount = 0;
+    currentLangTranslatedCount = 0;
+  }
+}
+
 class _MyHomePageState extends State<MyHomePage> {
   int selectedResDirIndex = -1;
   int selectedXmlFileIndex = -1;
@@ -31,6 +47,8 @@ class _MyHomePageState extends State<MyHomePage> {
   final Set<Language> _selectedLangs = {};
 
   final _openAI = OpenAiTrans();
+
+  final TranslateProgress _progress = TranslateProgress();
 
   @override
   void initState() {
@@ -280,6 +298,12 @@ class _MyHomePageState extends State<MyHomePage> {
                             label: const Text("一键翻译"),
                             onPressed: () {}),
                         TextButton.icon(
+                            icon: const Icon(Icons.select_all),
+                            label: const Text("选中可翻译的语言"),
+                            onPressed: () {
+                              onSelectCanTranslateLanguage();
+                            }),
+                        TextButton.icon(
                             icon: const Icon(Icons.language),
                             label: const Text("翻译选中语言"),
                             onPressed: () {
@@ -367,8 +391,10 @@ class _MyHomePageState extends State<MyHomePage> {
       "TPMS Detection State",
       "Cleaning fluid"
     ]);
-    _openAI.transTexts(request).listen((event) {
-      log.d("${event ?? "null"}");
+    _openAI.startTransRequest(request, (resp) {
+      if (resp != null) {
+        log.d("resp=$resp");
+      }
     });
   }
 
@@ -385,10 +411,11 @@ class _MyHomePageState extends State<MyHomePage> {
   void onTapXmlFile(int index) {
     setState(() {
       selectedXmlFileIndex = index;
+      _selectedLangs.clear();
       final xmlFileName = _currentResInfo.xmlFileNames.elementAt(index);
       log.d("onTapXmlFile: index=$index, name=$xmlFileName");
       _xmlData.setFileName(xmlFileName);
-      _xmlData.load(_currentResInfo);
+      _xmlData.load(_currentResInfo.dir);
       log.d("onTapXmlFile: load result: ${_xmlData.items.length}");
     });
   }
@@ -409,20 +436,38 @@ class _MyHomePageState extends State<MyHomePage> {
     return needList;
   }
 
-  void transOneLanguage(Language lang) async {
+  bool isLanguageNeedTrans(Language lang) {
+    for (var it in _xmlData.items) {
+      if (it.translatable) {
+        final v = it.valueMap[lang];
+        if (v == null || v.isEmpty) {
+          final defVal = it.valueMap[Language.def];
+          if (defVal != null) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  Future<void> transOneLanguage(Language lang, {bool byUi = false}) async {
     final needList = collectNeedTransStringsForLang(lang);
-    log.d("needList=$needList");
+    // log.d("needList=$needList");
     if (needList.isEmpty) {
-      log.d("needList is empty");
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("没有需要翻译的内容!")));
+      log.d("[${lang.cnName}] needList is empty");
+      if (byUi) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("[${lang.cnName}] 没有需要翻译的内容!")));
+      }
       return;
     }
     final req = TransRequest(lang, needList.map((e) => e.$1).toList(),
         needList.map((e) => e.$2).toList());
     _openAI.setConfig(Config.apiUrl.value, Config.apiToken.value,
         httpProxy: Config.httpProxy.value);
-    _openAI.transTexts(req).listen((event) {
+
+    await _openAI.startTransRequest(req, (event) {
       log.d("onResponse: $event");
       if (event != null && event.strings.isNotEmpty) {
         for (var (idx, it) in event.strings.indexed) {
@@ -446,9 +491,11 @@ class _MyHomePageState extends State<MyHomePage> {
     for (final i in langList) {
       _xmlData.saveToDir(_currentResInfo.dir, i);
     }
+    _xmlData.load(_currentResInfo.dir);
+    setState(() {});
   }
 
-  void onTransSelectLanguage() {
+  void onTransSelectLanguage() async {
     if (Config.apiToken.value.isEmpty) {
       showMessage("请先配置API Token!");
       return;
@@ -457,12 +504,38 @@ class _MyHomePageState extends State<MyHomePage> {
       showMessage("无选中的语言!");
       return;
     }
-    for (final lang in _selectedLangs) {
-      transOneLanguage(lang);
+
+    final list = _selectedLangs.toList();
+    list.sort((a, b) => a.index.compareTo(b.index));
+    for (final lang in list) {
+      await transOneLanguage(lang, byUi: true);
     }
   }
 
   void showMessage(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  void onSelectCanTranslateLanguage() async {
+    var changed = false;
+    var canTransCount = 0;
+    for (final i in Language.supportedLanguages) {
+      if (isLanguageNeedTrans(i)) {
+        canTransCount++;
+        if (!_selectedLangs.contains(i)) {
+          _selectedLangs.add(i);
+          changed = true;
+        }
+      } else {
+        if (_selectedLangs.contains(i)) {
+          _selectedLangs.remove(i);
+          changed = true;
+        }
+      }
+    }
+    showMessage("已选中$canTransCount种可翻译的语言!");
+    if (changed) {
+      setState(() {});
+    }
   }
 }
