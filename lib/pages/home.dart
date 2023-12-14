@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../config.dart';
 import '../data/language.dart';
 import '../data/project.dart';
+import '../data/xml_data.dart';
 import '../global.dart';
 import '../trans/openai.dart';
 import '../utils/picker_utils.dart';
@@ -43,7 +44,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final Project _project = Project("New Project");
   final ResDirInfo _currentResInfo = ResDirInfo();
-  final XmlStringData _xmlData = XmlStringData();
+  final XmlData _xmlData = XmlData();
   final Set<Language> _selectedLangs = {};
 
   final _openAI = OpenAiTrans();
@@ -127,8 +128,8 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Text(it.translatable ? "yes" : "no"))));
       final transIt = _xmlData.getTranslatedItem(it.name);
       for (var lang in Language.supportedLanguages) {
-        final v = it.valueMap[lang] ?? "";
-        final transV = transIt != null ? transIt.valueMap[lang] : null;
+        final v = it.valueMap[lang]?.toString() ?? "";
+        final transV = transIt != null ? transIt.valueMap[lang]?.toString() : null;
         final hasTrans = transV != null && transV.isNotEmpty;
         cells.add(DataCell(DecoratedBox(
           decoration: BoxDecoration(
@@ -319,7 +320,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             icon: const Icon(Icons.bug_report),
                             label: const Text("测试"),
                             onPressed: () {
-                              chatCompleteTest(Config.apiUrl.value, Config.apiToken.value);
+                              chatCompleteTest(
+                                  Config.apiUrl.value, Config.apiToken.value);
                             }),
                       ])),
                   Expanded(

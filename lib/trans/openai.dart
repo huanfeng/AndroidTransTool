@@ -153,7 +153,8 @@ class OpenAiTrans {
       }
       log.d("Response text:$text");
       final Map result = jsonDecode(text);
-      final resultText = result.values.map((e) => e as String).toList();
+      final resultText =
+          result.values.map((e) => fixTranslatedText(e as String)).toList();
       if (request.strings.length != resultText.length) {
         log.d("Response text length is not equal to request");
         return null;
@@ -161,6 +162,12 @@ class OpenAiTrans {
       return TransResponse(request.targetLang, request.keys, resultText,
           start: request.start, count: request.count);
     }
+  }
+
+  // 修正翻译后的文本
+  String fixTranslatedText(String text) {
+    // 目前是将单引号增加转义
+    return text.replaceAll("'", "\\'");
   }
 
   Future<void> startTransRequest(
