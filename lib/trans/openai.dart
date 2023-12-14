@@ -15,9 +15,15 @@ void chatCompleteTest(String apiUrl, String apiToken) async {
       enableLog: true);
 
   final request = ChatCompleteText(
-      messages: [Messages(role: Role.user, content: "Hello!")],
+      messages: [
+        Messages(
+            role: Role.user,
+            content:
+                "Hello! Please translate follow text into Chinese in json object with key zh-rCN: Hello!\nWorld!\nYou need sleep")
+      ],
       maxToken: 200,
-      model: GptTurboChatModel());
+      model: GptTurbo1106Model(),
+      responseFormat: ResponseFormat(type: "json_object"));
 
   final response = await openAI.onChatCompletion(request: request);
   for (var element in response!.choices) {
@@ -44,8 +50,11 @@ sealed class TransData {
   }
 
   String genPromote() {
-    final text = transPromoteCN.replaceAll("TARGET_LANG", targetLang.cnName);
-    return text + jsonEncode(strings);
+    final text = transPromoteCN2.replaceAll("TARGET_LANG", targetLang.cnName);
+    return text +
+        jsonEncode(strings
+            .asMap()
+            .map((key, value) => MapEntry(key.toString(), value)));
   }
 }
 
@@ -78,6 +87,9 @@ class TransResponse extends TransData {
 
 const transPromoteCN =
     "我希望你充当语言翻译器.我会发送一段Json格式的文本,你需要将其中的文本内容翻译为TARGET_LANG,一定要是TARGET_LANG.不要写任何解释或其他文字,你的回复需要保持Json的格式,只修改需要翻译的内容,如果翻译后的内容有双引号,请修改为单引号。第一句是: ";
+
+const transPromoteCN2 =
+    "作为语言翻译器,你的任务是将我发送的JSON格式文本中的文本内容翻译成TARGET_LANG.请确保不写任何解释或其他文字,保持JSON格式进行回复,只修改需要翻译的内容.如果翻译后的内容包含双引号,请修改为单引号.第一句是: ";
 
 class OpenAiTrans {
   OpenAI? _openAI;
@@ -127,7 +139,8 @@ class OpenAiTrans {
         messages: [Messages(role: Role.user, content: request.genPromote())],
         maxToken: 2000,
         topP: 0.8,
-        model: GptTurboChatModel());
+        model: GptTurbo1106Model(),
+        responseFormat: ResponseFormat(type: "json_object"));
     final openAi = _ensureOpenAi();
     final response = await openAi.onChatCompletion(request: chat);
     if (response == null) {
@@ -139,8 +152,8 @@ class OpenAiTrans {
         return null;
       }
       log.d("Response text:$text");
-      final List result = jsonDecode(text);
-      final resultText = result.map((e) => e as String).toList();
+      final Map result = jsonDecode(text);
+      final resultText = result.values.map((e) => e as String).toList();
       if (request.strings.length != resultText.length) {
         log.d("Response text length is not equal to request");
         return null;

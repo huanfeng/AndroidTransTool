@@ -315,6 +315,12 @@ class _MyHomePageState extends State<MyHomePage> {
                             onPressed: () {
                               saveResult();
                             }),
+                        TextButton.icon(
+                            icon: const Icon(Icons.bug_report),
+                            label: const Text("测试"),
+                            onPressed: () {
+                              chatCompleteTest(Config.apiUrl.value, Config.apiToken.value);
+                            }),
                       ])),
                   Expanded(
                       child: Scrollbar(
