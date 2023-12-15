@@ -5,12 +5,13 @@ import 'package:xml/xml.dart';
 
 import '../config.dart';
 import '../global.dart';
+import '../trans/trans_data.dart';
 import '../utils/string_utils.dart';
 import 'language.dart';
 import 'project.dart';
 
-const TYPE_STRING = "string";
-const TYPE_STRING_ARRAY = "string-array";
+const typeString = "string";
+const typeStringArray = "string-array";
 
 abstract class ResItem<T> {
   String type;
@@ -26,12 +27,17 @@ abstract class ResItem<T> {
 
   ResItem(this.type, this.name, {this.translatable = true});
 
+  T? getLangItem(Language lang) {
+    return valueMap[lang];
+  }
+
+  // 生成xml
   void buildXml(XmlBuilder builder, T targetValue);
 }
 
 class StringItem extends ResItem<String> {
   StringItem(name, {translatable = true})
-      : super(TYPE_STRING, name, translatable: translatable);
+      : super(typeString, name, translatable: translatable);
 
   @override
   void buildXml(XmlBuilder builder, String targetValue) {
@@ -44,7 +50,7 @@ class StringItem extends ResItem<String> {
 
 class ArrayItem extends ResItem<List<String>> {
   ArrayItem(name, {translatable = true})
-      : super(TYPE_STRING_ARRAY, name, translatable: translatable);
+      : super(typeStringArray, name, translatable: translatable);
 
   @override
   void buildXml(XmlBuilder builder, List<String> targetValue) {
@@ -101,7 +107,7 @@ class XmlData {
         final type = it.name.local;
         final name = it.getAttribute("name") ?? "";
         final translatable = !(it.getAttribute("translatable") == "false");
-        if (type == TYPE_STRING) {
+        if (type == typeString) {
           final value = it.firstChild?.value?.trimDQ() ?? "";
           if (_itemsMap.containsKey(name)) {
             final si = _itemsMap[name]!;
@@ -112,7 +118,7 @@ class XmlData {
             items.add(si);
             _itemsMap[name] = si;
           }
-        } else if (type == TYPE_STRING_ARRAY) {
+        } else if (type == typeStringArray) {
           final elements = it.findElements("item");
           final stringList = <String>[];
           for (final i in elements) {
@@ -156,14 +162,13 @@ class XmlData {
     return translatedItems[key];
   }
 
-  ResItem getOrCreateTranslatedItem(String key) {
-    // TODO: 根据类型返回不同
-    if (translatedItems.containsKey(key)) {
-      return translatedItems[key]!;
+  ResItem getOrCreateTranslatedItem(TransItem item) {
+    if (translatedItems.containsKey(item.key)) {
+      return translatedItems[item.key]!;
     } else {
-      final item = StringItem(key);
-      translatedItems[key] = item;
-      return item;
+      final newItem = item.toResItem();
+      translatedItems[item.key] = newItem;
+      return newItem;
     }
   }
 

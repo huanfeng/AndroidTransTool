@@ -6,6 +6,7 @@ import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
 
 import '../data/language.dart';
 import '../global.dart';
+import 'trans_data.dart';
 
 void chatCompleteTest(String apiUrl, String apiToken) async {
   final openAI = OpenAI.instance.build(
@@ -31,65 +32,33 @@ void chatCompleteTest(String apiUrl, String apiToken) async {
   }
 }
 
-sealed class TransData {
-  final bool isRequest;
-  final Language targetLang;
-  final List<String> keys;
-  final List<String> strings;
-  int start = 0;
-  int count = 0;
+class TransPromote {
+  static const kTargetLang = "TARGET_LANG";
 
-  TransData(this.targetLang, this.keys, this.strings,
-      {this.start = 0, int? count, this.isRequest = true}) {
-    this.count = count ?? strings.length;
-  }
+  // static const transPromoteCN =
+  //     "我希望你充当语言翻译器.我会发送一段Json格式的文本,你需要将其中的文本内容翻译为TARGET_LANG,一定要是TARGET_LANG.不要写任何解释或其他文字,你的回复需要保持Json的格式,只修改需要翻译的内容,如果翻译后的内容有双引号,请修改为单引号。第一句是: ";
 
-  @override
-  String toString() {
-    return 'TransData{targetLang: $targetLang, start: $start, count: $count}';
-  }
+  static const transPromoteCN =
+      "作为语言翻译器,你的任务是将我发送的JSON格式文本中的文本内容翻译成TARGET_LANG.请确保不写任何解释或其他文字,保持JSON格式进行回复,只修改需要翻译的内容.如果翻译后的内容包含双引号,请修改为单引号.";
 
-  String genPromote() {
-    final text = transPromoteCN2.replaceAll("TARGET_LANG", targetLang.cnName);
-    return text +
-        jsonEncode(strings
-            .asMap()
-            .map((key, value) => MapEntry(key.toString(), value)));
-  }
-}
+  static const transPromoteEN =
+      "As a language translator, your task is to translate the text content in the JSON format text I send into TARGET_LANG. Please ensure not to write any explanations or other text, maintain the JSON format for replies, only modifying the content that needs translation. If the translated content includes double quotes, please change them to single quotes.";
 
-class TransRequest extends TransData {
-  TransRequest(super.targetLang, super.keys, super.strings,
-      {super.start, super.count, super.isRequest = true});
+  static const transPromoteCHT =
+      "作為語言翻譯器，你的任務是將我發送的JSON格式文本中的文本內容翻譯成TARGET_LANG。請確保不寫任何解釋或其他文字，保持JSON格式進行回覆，只修改需要翻譯的內容。如果翻譯後的內容包含雙引號，請修改為單引號。";
 
-  List<TransRequest> split(int size) {
-    final result = <TransRequest>[];
-    var start = 0;
-    while (start < strings.length) {
-      final end = math.min(start + size, strings.length);
-      final subKeys = keys.sublist(start, end);
-      final subStrings = strings.sublist(start, end);
-      result.add(TransRequest(
-        targetLang,
-        subKeys,
-        subStrings,
-      ));
-      start = end;
+  static String getTransPromote(Language targetLang) {
+    switch (targetLang) {
+      case Language.cn:
+        return transPromoteCN.replaceAll(kTargetLang, targetLang.cnName);
+      case Language.cnTw:
+      case Language.cnHk:
+        return transPromoteCHT.replaceAll(kTargetLang, targetLang.cnName);
+      default:
+        return transPromoteEN.replaceAll(kTargetLang, targetLang.enName);
     }
-    return result;
   }
 }
-
-class TransResponse extends TransData {
-  TransResponse(super.targetLang, super.keys, super.strings,
-      {super.start, super.count, super.isRequest = false});
-}
-
-const transPromoteCN =
-    "我希望你充当语言翻译器.我会发送一段Json格式的文本,你需要将其中的文本内容翻译为TARGET_LANG,一定要是TARGET_LANG.不要写任何解释或其他文字,你的回复需要保持Json的格式,只修改需要翻译的内容,如果翻译后的内容有双引号,请修改为单引号。第一句是: ";
-
-const transPromoteCN2 =
-    "作为语言翻译器,你的任务是将我发送的JSON格式文本中的文本内容翻译成TARGET_LANG.请确保不写任何解释或其他文字,保持JSON格式进行回复,只修改需要翻译的内容.如果翻译后的内容包含双引号,请修改为单引号.第一句是: ";
 
 class OpenAiTrans {
   OpenAI? _openAI;
@@ -114,7 +83,7 @@ class OpenAiTrans {
         token: _apiToken,
         apiUrl: _apiUrl,
         baseOption: HttpSetup(
-            receiveTimeout: const Duration(seconds: 10),
+            receiveTimeout: const Duration(seconds: 120),
             proxy: _httpProxy.isNotEmpty ? "PROXY $_httpProxy" : ""),
         enableLog: true);
     _isInit = true;
@@ -136,8 +105,13 @@ class OpenAiTrans {
 
   Future<TransResponse?> _transOne(TransData request) async {
     final chat = ChatCompleteText(
-        messages: [Messages(role: Role.user, content: request.genPromote())],
-        maxToken: 2000,
+        messages: [
+          Messages(
+              role: Role.system,
+              content: TransPromote.getTransPromote(request.targetLang)),
+          Messages(role: Role.user, content: request.toJson())
+        ],
+        maxToken: 4000,
         topP: 0.8,
         model: GptTurbo1106Model(),
         responseFormat: ResponseFormat(type: "json_object"));
@@ -153,13 +127,30 @@ class OpenAiTrans {
       }
       log.d("Response text:$text");
       final Map result = jsonDecode(text);
-      final resultText =
-          result.values.map((e) => fixTranslatedText(e as String)).toList();
-      if (request.strings.length != resultText.length) {
-        log.d("Response text length is not equal to request");
-        return null;
+      var transCount = 0;
+      for (var e in result.entries) {
+        final key = e.key as String;
+        final value = e.value;
+        if (value is String) {
+          final item = request.getItem(key);
+          if (item != null) {
+            item.dstValue = fixTranslatedText(value);
+            transCount++;
+          }
+        } else if (value is List) {
+          final item = request.getItem(key);
+          if (item != null) {
+            final list =
+                value.map((e) => fixTranslatedText(e as String)).toList();
+            item.dstValue = list;
+            transCount++;
+          }
+        }
       }
-      return TransResponse(request.targetLang, request.keys, resultText,
+      if (request.items.length != transCount) {
+        log.w("Response text length is not equal to request");
+      }
+      return TransResponse(request.targetLang, request.items,
           start: request.start, count: request.count);
     }
   }
@@ -173,7 +164,7 @@ class OpenAiTrans {
   Future<void> startTransRequest(
       TransRequest request, Function(TransResponse?) callback) async {
     // 拆分成小的请求进行翻译
-    if (request.strings.length > maxPreRequestCount) {
+    if (request.items.length > maxPreRequestCount) {
       final subRequests = request.split(maxPreRequestCount);
       for (var subRequest in subRequests) {
         final resp = await _transOne(subRequest);

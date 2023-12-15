@@ -6,6 +6,7 @@ import '../data/project.dart';
 import '../data/xml_data.dart';
 import '../global.dart';
 import '../trans/openai.dart';
+import '../trans/trans_data.dart';
 import '../utils/picker_utils.dart';
 import '../widgets/logview.dart';
 import '../widgets/panel_layout.dart';
@@ -129,7 +130,8 @@ class _MyHomePageState extends State<MyHomePage> {
       final transIt = _xmlData.getTranslatedItem(it.name);
       for (var lang in Language.supportedLanguages) {
         final v = it.valueMap[lang]?.toString() ?? "";
-        final transV = transIt != null ? transIt.valueMap[lang]?.toString() : null;
+        final transV =
+            transIt != null ? transIt.valueMap[lang]?.toString() : null;
         final hasTrans = transV != null && transV.isNotEmpty;
         cells.add(DataCell(DecoratedBox(
           decoration: BoxDecoration(
@@ -384,21 +386,17 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void testTrans() {
-    final request = TransRequest(Language.cnHk, [
+    final items = [
       "Car Language",
       "Auto Start-Stop",
       "Calibration",
       "TPMS Calibration State",
       "TPMS Detection State",
       "Cleaning fluid"
-    ], [
-      "Car Language",
-      "Auto Start-Stop",
-      "Calibration",
-      "TPMS Calibration State",
-      "TPMS Detection State",
-      "Cleaning fluid"
-    ]);
+    ].indexed.map(((e) {
+      return TransItem(e.$1.toString(), e.$2);
+    })).toList();
+    final request = TransRequest(Language.cnHk, items);
     _openAI.startTransRequest(request, (resp) {
       if (resp != null) {
         log.d("resp=$resp");
@@ -428,15 +426,15 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  List<(String, String)> collectNeedTransStringsForLang(Language lang) {
-    final needList = <(String, String)>[];
+  List<TransItem> collectNeedTransStringsForLang(Language lang) {
+    final needList = <TransItem>[];
     for (var it in _xmlData.items) {
       if (it.translatable) {
-        final v = it.valueMap[lang];
+        final v = it.getLangItem(lang);
         if (v == null || v.isEmpty) {
-          final defVal = it.valueMap[Language.def];
+          final defVal = it.getLangItem(Language.def);
           if (defVal != null) {
-            needList.add((it.name, defVal));
+            needList.add(TransItem(it.name, defVal));
           }
         }
       }
@@ -470,18 +468,16 @@ class _MyHomePageState extends State<MyHomePage> {
       }
       return;
     }
-    final req = TransRequest(lang, needList.map((e) => e.$1).toList(),
-        needList.map((e) => e.$2).toList());
+    final req = TransRequest(lang, needList);
     _openAI.setConfig(Config.apiUrl.value, Config.apiToken.value,
         httpProxy: Config.httpProxy.value);
 
     await _openAI.startTransRequest(req, (event) {
       log.d("onResponse: $event");
-      if (event != null && event.strings.isNotEmpty) {
-        for (var (idx, it) in event.strings.indexed) {
-          final key = event.keys[idx];
-          final transItem = _xmlData.getOrCreateTranslatedItem(key);
-          transItem.valueMap[lang] = it;
+      if (event != null) {
+        for (var it in event.items) {
+          final transItem = _xmlData.getOrCreateTranslatedItem(it);
+          transItem.valueMap[lang] = it.dstValue;
         }
         setState(() {});
       }
@@ -524,6 +520,7 @@ class _MyHomePageState extends State<MyHomePage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  // 选择可翻译的语言
   void onSelectCanTranslateLanguage() async {
     var changed = false;
     var canTransCount = 0;

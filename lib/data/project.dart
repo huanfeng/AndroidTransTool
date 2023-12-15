@@ -2,12 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
-import 'package:xml/xml.dart';
 
-import '../config.dart';
 import '../global.dart';
-import '../utils/string_utils.dart';
-import 'language.dart';
 
 const valuesDirName = "values";
 const valuesDirPrefix = "values-";
@@ -122,4 +118,3 @@ class ResDirInfo {
     xmlFileNames.clear();
   }
 }
-
