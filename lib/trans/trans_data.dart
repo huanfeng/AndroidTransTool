@@ -18,7 +18,7 @@ sealed class TransData {
   }
 
   TransItem? getItem(String key) {
-    return items.firstWhere((element) => element.key == key);
+    return items.where((element) => element.key == key).firstOrNull;
   }
 
   @override

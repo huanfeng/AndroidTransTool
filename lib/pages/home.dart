@@ -426,7 +426,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  List<TransItem> collectNeedTransStringsForLang(Language lang) {
+  List<TransItem> collectNeedTransItemForLang(Language lang) {
     final needList = <TransItem>[];
     for (var it in _xmlData.items) {
       if (it.translatable) {
@@ -458,7 +458,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> transOneLanguage(Language lang, {bool byUi = false}) async {
-    final needList = collectNeedTransStringsForLang(lang);
+    final needList = collectNeedTransItemForLang(lang);
     // log.d("needList=$needList");
     if (needList.isEmpty) {
       log.d("[${lang.cnName}] needList is empty");
@@ -477,7 +477,9 @@ class _MyHomePageState extends State<MyHomePage> {
       if (event != null) {
         for (var it in event.items) {
           final transItem = _xmlData.getOrCreateTranslatedItem(it);
-          transItem.valueMap[lang] = it.dstValue;
+          if (it.dstValue != null) {
+            transItem.valueMap[lang] = it.dstValue;
+          }
         }
         setState(() {});
       }
