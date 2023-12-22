@@ -12,7 +12,8 @@ import 'pages/settings.dart';
 import 'utils/touch_utils.dart';
 
 const appVersion = "V0.1";
-const appTitle = "Android Trans Tool $appVersion";
+const appName = "Android Trans Tool";
+const appTitle = "$appName $appVersion";
 
 bool get isDesktop {
   if (kIsWeb) return false;
@@ -61,7 +62,7 @@ class MyApp extends StatelessWidget {
       title: appTitle,
       initialRoute: "/",
       theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
           // 修改拖动条加宽, 常显示
           scrollbarTheme: ScrollbarThemeData(

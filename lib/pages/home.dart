@@ -10,6 +10,7 @@ import '../trans/trans_data.dart';
 import '../utils/picker_utils.dart';
 import '../widgets/logview.dart';
 import '../widgets/panel_layout.dart';
+import 'menu.dart';
 import 'project_setting.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -51,10 +52,28 @@ class _MyHomePageState extends State<MyHomePage> {
   final _openAI = OpenAiTrans();
 
   final TranslateProgress _progress = TranslateProgress();
+  final ScrollController tableVController = ScrollController();
+  final ScrollController tableHController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  void onMenuPressed(MenuEntry entry) {
+    switch (entry) {
+      case MenuEntry.openFolder:
+        onOpenProject();
+      case MenuEntry.settings:
+        Navigator.pushNamed(context, 'setting');
+      default:
+        break;
+    }
   }
 
   Future<void> _showProjectSettingDialog() async {
@@ -159,230 +178,267 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final ScrollController tableVController = ScrollController();
-    final ScrollController tableHController = ScrollController();
-
     return Scaffold(
-        appBar: AppBar(
+      appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Row(children: [
-            Text(widget.title),
-            const SizedBox(width: 60),
-            const Text(
-              "项目路径: ",
-              style: TextStyle(fontSize: 16),
+          title: Text(widget.title),
+          flexibleSpace: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+            return Stack(fit: StackFit.expand, children: [
+              Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [MainMenu(onMenuPressed: onMenuPressed)],
+                  ))
+            ]);
+          })),
+      body: mainLayout(),
+    );
+  }
+
+  List<Widget> actions() {
+    return [
+      TextButton.icon(
+          icon: const Icon(Icons.file_open),
+          label: const Text("打开项目"),
+          onPressed: () {}),
+      TextButton.icon(
+          icon: const Icon(Icons.settings),
+          label: const Text("项目设置"),
+          onPressed: () {
+            Navigator.pushNamed(context, 'project_setting');
+          }),
+      PopupMenuButton<String>(
+        itemBuilder: (context) {
+          return <PopupMenuEntry<String>>[
+            PopupMenuItem<String>(
+              value: '语文',
+              child: Text('语文'),
             ),
-            SelectableText(
-              _project.projectDir,
-              style: const TextStyle(fontSize: 16),
+            PopupMenuItem<String>(
+              value: '数学',
+              child: Text('数学'),
             ),
-          ]),
-          automaticallyImplyLeading: false,
-          actions: [
-            TextButton.icon(
-                icon: const Icon(Icons.file_open),
-                label: const Text("打开项目"),
-                onPressed: () {
-                  openDirectoryPacker(
-                      title: "请选择安卓工程目录",
-                      cb: (dir) {
-                        _project.loadFrom(dir);
-                        _currentResInfo.reset();
-                        selectedResDirIndex = -1;
-                        selectedXmlFileIndex = -1;
-                        setState(() {});
-                      });
-                }),
-            TextButton.icon(
-                icon: const Icon(Icons.settings),
-                label: const Text("项目设置"),
-                onPressed: () {
-                  Navigator.pushNamed(context, 'project_setting');
-                }),
-            TextButton.icon(
-                icon: const Icon(Icons.settings_applications),
-                label: const Text("系统设置"),
-                onPressed: () {
-                  Navigator.pushNamed(context, 'setting');
-                }),
-            const SizedBox(width: 30),
-          ],
-        ),
-        body: SimplePanelLayout(
-            left: Container(
-                width: 450,
-                decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primaryContainer
-                        .withAlpha(80)),
-                child: Column(
-                  children: [
-                    Container(
-                        alignment: Alignment.center,
-                        height: 30,
-                        decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .secondaryContainer),
-                        child: Text(
-                            "资源目录: ${_project.resDirs.length}  当前选择: ${selectedResDirIndex < 0 ? "-" : selectedResDirIndex + 1}")),
-                    Expanded(
-                        child: ListView.builder(
-                            itemCount: _project.resDirs.length,
-                            itemBuilder: (context, index) {
-                              if (index < _project.resDirs.length) {
-                                final children = <Widget>[];
-                                children.add(ListTile(
-                                    title: Text(_project.resDirs[index]),
-                                    selected: index == selectedResDirIndex,
-                                    onTap: () {
-                                      onTapResDir(index);
-                                    }));
-                                if (index < _project.resDirs.length - 1) {
-                                  children.add(const Divider());
-                                }
-                                return Column(
-                                  children: children,
-                                );
-                              }
-                              return null;
-                            })),
-                    Container(
-                        alignment: Alignment.center,
-                        height: 30,
-                        decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .secondaryContainer),
-                        child: Text(
-                            "资源文件: ${_currentResInfo.xmlFileNames.length} 当前选择: ${selectedXmlFileIndex < 0 ? "-" : selectedXmlFileIndex + 1}")),
-                    Expanded(
-                        child: ListView.builder(
-                            itemCount: _currentResInfo.xmlFileNames.length,
-                            itemBuilder: (context, index) {
-                              if (index < _currentResInfo.xmlFileNames.length) {
-                                final children = <Widget>[];
-                                children.add(ListTile(
-                                    title: Text(_currentResInfo.xmlFileNames
-                                        .elementAt(index)),
-                                    selected: index == selectedXmlFileIndex,
-                                    onTap: () {
-                                      onTapXmlFile(index);
-                                    }));
-                                if (index <
-                                    _currentResInfo.xmlFileNames.length - 1) {
-                                  children.add(const Divider());
-                                }
-                                return Column(
-                                  children: children,
-                                );
-                              }
-                              return null;
-                            })),
-                    const Divider(),
-                    _showLogView
-                        ? Container(
-                            height: 160, color: Colors.white, child: LogView())
-                        : const SizedBox.shrink(),
-                  ],
-                )),
-            right: Container(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Container(
-                      padding: const EdgeInsets.only(left: 10, right: 10),
-                      height: 40,
-                      child: Row(children: [
-                        TextButton.icon(
-                            icon: const Icon(Icons.language),
-                            label: const Text("一键翻译"),
-                            onPressed: () {}),
-                        TextButton.icon(
-                            icon: const Icon(Icons.select_all),
-                            label: const Text("选中可翻译的语言"),
-                            onPressed: () {
-                              onSelectCanTranslateLanguage();
-                            }),
-                        TextButton.icon(
-                            icon: const Icon(Icons.language),
-                            label: const Text("翻译选中语言"),
-                            onPressed: () {
-                              onTransSelectLanguage();
-                            }),
-                        TextButton.icon(
-                            icon: const Icon(Icons.save),
-                            label: const Text("保存结果(不可恢复,请提前备份)"),
-                            onPressed: () {
-                              saveResult();
-                            }),
-                        TextButton.icon(
-                            icon: const Icon(Icons.bug_report),
-                            label: const Text("测试"),
-                            onPressed: () {
-                              chatCompleteTest(
-                                  Config.apiUrl.value, Config.apiToken.value);
-                            }),
-                      ])),
-                  Expanded(
-                      child: Scrollbar(
-                          controller: tableVController,
-                          child: Scrollbar(
-                              controller: tableHController,
-                              notificationPredicate: (notify) =>
-                                  notify.depth == 1,
-                              child: SingleChildScrollView(
-                                  controller: tableVController,
-                                  scrollDirection: Axis.vertical,
-                                  child: SingleChildScrollView(
-                                      controller: tableHController,
-                                      scrollDirection: Axis.horizontal,
-                                      child: DataTable(
-                                        showCheckboxColumn: false,
-                                        columnSpacing: 20,
-                                        headingRowColor:
-                                            MaterialStateColor.resolveWith(
-                                                (states) => Theme.of(context)
-                                                    .colorScheme
-                                                    .primaryContainer),
-                                        headingTextStyle: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onPrimaryContainer,
-                                        ),
-                                        showBottomBorder: true,
-                                        columns: dataColumns(),
-                                        rows: dataRows(),
-                                      ))))))
-                ],
-              ),
+            PopupMenuItem<String>(
+              value: '英语',
+              child: Text('英语'),
             ),
-            statusBar: Container(
-                height: 30,
-                padding: const EdgeInsets.only(left: 10, right: 10),
-                decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondaryContainer),
-                alignment: Alignment.centerLeft,
-                child: Row(children: [
-                  Expanded(child: Text("状态栏")),
-                  Expanded(child: Text("状态栏")),
-                  Spacer(),
-                  Expanded(
-                      child: Row(children: [
-                    Text("显示日志窗口"),
-                    Checkbox(
-                        value: _showLogView,
-                        semanticLabel: "显示日志窗口",
-                        onChanged: (v) {
-                          setState(() {
-                            _showLogView = v ?? false;
-                          });
-                        })
+            PopupMenuItem<String>(
+              value: '生物',
+              child: Text('生物'),
+            ),
+            PopupMenuItem<String>(
+              value: '化学',
+              child: Text('化学'),
+            ),
+          ];
+        },
+      ),
+      TextButton.icon(
+          icon: const Icon(Icons.settings_applications),
+          label: const Text("系统设置"),
+          onPressed: () {
+            Navigator.pushNamed(context, 'setting');
+          }),
+      const SizedBox(width: 60),
+    ];
+  }
+
+  Widget mainLayout() {
+    return SimplePanelLayout(
+        left: Container(
+            width: 450,
+            decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withAlpha(80)),
+            child: Column(
+              children: [
+                Container(
+                    alignment: Alignment.center,
+                    height: 30,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "项目路径: ",
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        SelectableText(
+                          _project.projectDir,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    )),
+                // const Divider(),
+                Container(
+                    alignment: Alignment.center,
+                    height: 30,
+                    decoration: BoxDecoration(
+                        color:
+                            Theme.of(context).colorScheme.secondaryContainer),
+                    child: Text(
+                        "资源目录: ${_project.resDirs.length}  当前选择: ${selectedResDirIndex < 0 ? "-" : selectedResDirIndex + 1}")),
+                Expanded(
+                    child: ListView.builder(
+                        itemCount: _project.resDirs.length,
+                        itemBuilder: (context, index) {
+                          if (index < _project.resDirs.length) {
+                            final children = <Widget>[];
+                            children.add(ListTile(
+                                title: Text(_project.resDirs[index]),
+                                selected: index == selectedResDirIndex,
+                                onTap: () {
+                                  onTapResDir(index);
+                                }));
+                            if (index < _project.resDirs.length - 1) {
+                              children.add(const Divider());
+                            }
+                            return Column(
+                              children: children,
+                            );
+                          }
+                          return null;
+                        })),
+                Container(
+                    alignment: Alignment.center,
+                    height: 30,
+                    decoration: BoxDecoration(
+                        color:
+                            Theme.of(context).colorScheme.secondaryContainer),
+                    child: Text(
+                        "资源文件: ${_currentResInfo.xmlFileNames.length} 当前选择: ${selectedXmlFileIndex < 0 ? "-" : selectedXmlFileIndex + 1}")),
+                Expanded(
+                    child: ListView.builder(
+                        itemCount: _currentResInfo.xmlFileNames.length,
+                        itemBuilder: (context, index) {
+                          if (index < _currentResInfo.xmlFileNames.length) {
+                            final children = <Widget>[];
+                            children.add(ListTile(
+                                title: Text(_currentResInfo.xmlFileNames
+                                    .elementAt(index)),
+                                selected: index == selectedXmlFileIndex,
+                                onTap: () {
+                                  onTapXmlFile(index);
+                                }));
+                            if (index <
+                                _currentResInfo.xmlFileNames.length - 1) {
+                              children.add(const Divider());
+                            }
+                            return Column(
+                              children: children,
+                            );
+                          }
+                          return null;
+                        })),
+                const Divider(),
+                _showLogView
+                    ? Container(
+                        height: 160, color: Colors.white, child: LogView())
+                    : const SizedBox.shrink(),
+              ],
+            )),
+        right: Container(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(
+                  padding: const EdgeInsets.only(left: 10, right: 10),
+                  height: 40,
+                  child: Row(children: [
+                    TextButton.icon(
+                        icon: const Icon(Icons.language),
+                        label: const Text("一键翻译"),
+                        onPressed: () {}),
+                    TextButton.icon(
+                        icon: const Icon(Icons.select_all),
+                        label: const Text("选中可翻译的语言"),
+                        onPressed: () {
+                          onSelectCanTranslateLanguage();
+                        }),
+                    TextButton.icon(
+                        icon: const Icon(Icons.language),
+                        label: const Text("翻译选中语言"),
+                        onPressed: () {
+                          onTransSelectLanguage();
+                        }),
+                    TextButton.icon(
+                        icon: const Icon(Icons.save),
+                        label: const Text("保存结果(不可恢复,请提前备份)"),
+                        onPressed: () {
+                          saveResult();
+                        }),
+                    TextButton.icon(
+                        icon: const Icon(Icons.bug_report),
+                        label: const Text("测试"),
+                        onPressed: () {
+                          chatCompleteTest(
+                              Config.apiUrl.value, Config.apiToken.value);
+                        }),
                   ])),
-                ]))));
+              Expanded(
+                  child: Scrollbar(
+                      controller: tableVController,
+                      child: Scrollbar(
+                          controller: tableHController,
+                          notificationPredicate: (notify) => notify.depth == 1,
+                          child: SingleChildScrollView(
+                              controller: tableVController,
+                              scrollDirection: Axis.vertical,
+                              child: SingleChildScrollView(
+                                  controller: tableHController,
+                                  scrollDirection: Axis.horizontal,
+                                  child: DataTable(
+                                    showCheckboxColumn: false,
+                                    columnSpacing: 20,
+                                    headingRowColor:
+                                        MaterialStateColor.resolveWith(
+                                            (states) => Theme.of(context)
+                                                .colorScheme
+                                                .primaryContainer),
+                                    headingTextStyle: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimaryContainer,
+                                    ),
+                                    showBottomBorder: true,
+                                    columns: dataColumns(),
+                                    rows: dataRows(),
+                                  ))))))
+            ],
+          ),
+        ),
+        statusBar: Container(
+            height: 30,
+            padding: const EdgeInsets.only(left: 10, right: 10),
+            decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondaryContainer),
+            alignment: Alignment.centerLeft,
+            child: Row(children: [
+              Expanded(child: Text("状态栏")),
+              Expanded(child: Text("状态栏")),
+              Spacer(),
+              Expanded(
+                  child: Row(children: [
+                Text("显示日志窗口"),
+                Checkbox(
+                    value: _showLogView,
+                    semanticLabel: "显示日志窗口",
+                    onChanged: (v) {
+                      setState(() {
+                        _showLogView = v ?? false;
+                      });
+                    })
+              ])),
+            ])));
   }
 
   void testTrans() {
@@ -402,6 +458,18 @@ class _MyHomePageState extends State<MyHomePage> {
         log.d("resp=$resp");
       }
     });
+  }
+
+  void onOpenProject() {
+    openDirectoryPacker(
+        title: "请选择安卓工程目录",
+        cb: (dir) {
+          _project.loadFrom(dir);
+          _currentResInfo.reset();
+          selectedResDirIndex = -1;
+          selectedXmlFileIndex = -1;
+          setState(() {});
+        });
   }
 
   void onTapResDir(int index) {
