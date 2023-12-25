@@ -42,6 +42,12 @@ class _SimplePanelLayoutState extends State<SimplePanelLayout> {
 
   Timer? _debounce;
 
+  // 用于优化拖放逻辑
+  double leftDragStartValue = 0;
+  double leftDragStartOffset = 0;
+  double bottomDragStartValue = 0;
+  double bottomDragStartOffset = 0;
+
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
@@ -58,13 +64,23 @@ class _SimplePanelLayoutState extends State<SimplePanelLayout> {
               cursor: SystemMouseCursors.resizeLeftRight,
               child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
+                  onHorizontalDragStart: (DragStartDetails details) {
+                    // 当用户开始拖动时，计算leftWidth值
+                    leftDragStartValue = leftFlex;
+                    leftDragStartOffset = details.globalPosition.dx;
+                  },
                   onHorizontalDragUpdate: (DragUpdateDetails details) {
                     // 当用户拖动时，更新leftWidth值
                     setState(() {
                       // 更新leftFlex值，确保它在0到1之间
-                      leftFlex += details.primaryDelta! / screenSize.width;
+                      final offsetValue =
+                          details.globalPosition.dx - leftDragStartOffset;
+                      leftFlex =
+                          leftDragStartValue + offsetValue / screenSize.width;
                       leftFlex = leftFlex.clamp(minLeftFlex, maxLeftFlex);
                     });
+                  },
+                  onHorizontalDragEnd: (DragEndDetails details) {
                     _updateConfigFileDebounced();
                   },
                   child: const VerticalDivider(
@@ -79,13 +95,23 @@ class _SimplePanelLayoutState extends State<SimplePanelLayout> {
             cursor: SystemMouseCursors.resizeUpDown,
             child: GestureDetector(
                 behavior: HitTestBehavior.translucent,
+                onVerticalDragStart: (DragStartDetails details) {
+                  // 当用户开始拖动时，计算leftWidth值
+                  bottomDragStartValue = bottomFlex;
+                  bottomDragStartOffset = details.globalPosition.dy;
+                },
                 onVerticalDragUpdate: (DragUpdateDetails details) {
                   // 当用户拖动时，更新leftWidth值
                   setState(() {
                     // 更新leftFlex值，确保它在0到1之间
-                    bottomFlex -= details.primaryDelta! / screenSize.height;
+                    final offsetValue =
+                        bottomDragStartOffset - details.globalPosition.dy;
+                    bottomFlex =
+                        bottomDragStartValue + offsetValue / screenSize.height;
                     bottomFlex = bottomFlex.clamp(minBottomFlex, maxBottomFlex);
                   });
+                },
+                onVerticalDragEnd: (DragEndDetails details) {
                   _updateConfigFileDebounced();
                 },
                 child: const Divider(
