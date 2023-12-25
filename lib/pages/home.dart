@@ -337,11 +337,6 @@ class _MyHomePageState extends State<MyHomePage> {
                           }
                           return null;
                         })),
-                const Divider(),
-                _showLogView
-                    ? Container(
-                        height: 160, color: Colors.white, child: LogView())
-                    : const SizedBox.shrink(),
               ],
             )),
         right: Container(
@@ -416,6 +411,9 @@ class _MyHomePageState extends State<MyHomePage> {
             ],
           ),
         ),
+        bottom: _showLogView
+            ? Container(height: 160, color: Colors.white, child: LogView())
+            : null,
         statusBar: Container(
             height: 30,
             padding: const EdgeInsets.only(left: 10, right: 10),

@@ -33,16 +33,20 @@ class SimplePanelLayout extends StatefulWidget {
 class _SimplePanelLayoutState extends State<SimplePanelLayout> {
   static const minLeftFlex = 0.1;
   static const maxLeftFlex = 0.9;
+  static const minBottomFlex = 0.1;
+  static const maxBottomFlex = 0.5;
   static const debounceTime = 1000;
 
   double leftFlex = Config.leftPanelFlex.value;
+  double bottomFlex = Config.bottomPanelFlex.value;
 
   Timer? _debounce;
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double leftWidth = screenWidth * leftFlex;
+    final screenSize = MediaQuery.of(context).size;
+    double leftWidth = screenSize.width * leftFlex;
+    final bottomHeight = screenSize.height * bottomFlex;
 
     return Column(children: [
       if (widget.top != null) widget.top!,
@@ -58,7 +62,7 @@ class _SimplePanelLayoutState extends State<SimplePanelLayout> {
                     // 当用户拖动时，更新leftWidth值
                     setState(() {
                       // 更新leftFlex值，确保它在0到1之间
-                      leftFlex += details.primaryDelta! / screenWidth;
+                      leftFlex += details.primaryDelta! / screenSize.width;
                       leftFlex = leftFlex.clamp(minLeftFlex, maxLeftFlex);
                     });
                     _updateConfigFileDebounced();
@@ -70,7 +74,26 @@ class _SimplePanelLayoutState extends State<SimplePanelLayout> {
           Expanded(flex: 1, child: widget.right)
         ],
       )),
-      if (widget.bottom != null) widget.bottom!,
+      if (widget.bottom != null)
+        MouseRegion(
+            cursor: SystemMouseCursors.resizeUpDown,
+            child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onVerticalDragUpdate: (DragUpdateDetails details) {
+                  // 当用户拖动时，更新leftWidth值
+                  setState(() {
+                    // 更新leftFlex值，确保它在0到1之间
+                    bottomFlex -= details.primaryDelta! / screenSize.height;
+                    bottomFlex = bottomFlex.clamp(minBottomFlex, maxBottomFlex);
+                  });
+                  _updateConfigFileDebounced();
+                },
+                child: const Divider(
+                  height: 4,
+                  thickness: 2,
+                ))),
+      if (widget.bottom != null)
+        Container(height: bottomHeight, child: widget.bottom!),
       if (widget.statusBar != null) widget.statusBar!,
     ]);
   }
@@ -78,9 +101,10 @@ class _SimplePanelLayoutState extends State<SimplePanelLayout> {
   void _updateConfigFileDebounced() {
     // 取消之前的timer
     if (_debounce?.isActive ?? false) _debounce?.cancel();
-    // 启动新的timer，等待300毫秒
+    // 启动新的timer，等待
     _debounce = Timer(const Duration(milliseconds: debounceTime), () {
       Config.leftPanelFlex.value = leftFlex;
+      Config.bottomPanelFlex.value = bottomFlex;
     });
   }
 }

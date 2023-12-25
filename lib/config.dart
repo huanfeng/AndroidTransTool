@@ -64,6 +64,7 @@ class Config {
   static final httpProxy = ConfigItem("http_proxy", "");
 
   static final leftPanelFlex = ConfigItem("left_panel_flex", 0.3);
+  static final bottomPanelFlex = ConfigItem("bottom_panel_flex", 0.2);
 
   static final List<ConfigItem> configs = [
     apiToken,
