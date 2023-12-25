@@ -32,19 +32,19 @@ class ConfigItem<T> {
 
   void load() {
     if (_value is String) {
-      final v = Config.gPrefs.getString(key)?.trim() ?? "";
+      final v = Config.gPrefs.getString(key)?.trim() ?? defaultValue;
       _value = v as T;
     } else if (_value is bool) {
-      final v = Config.gPrefs.getBool(key) ?? false;
+      final v = Config.gPrefs.getBool(key) ?? defaultValue;
       _value = v as T;
     } else if (_value is int) {
-      final v = Config.gPrefs.getInt(key) ?? 0;
+      final v = Config.gPrefs.getInt(key) ?? defaultValue;
       _value = v as T;
     } else if (_value is double) {
-      final v = Config.gPrefs.getDouble(key) ?? 0;
+      final v = Config.gPrefs.getDouble(key) ?? defaultValue;
       _value = v as T;
     } else if (_value is List<String>) {
-      final v = Config.gPrefs.getStringList(key) ?? [];
+      final v = Config.gPrefs.getStringList(key) ?? defaultValue;
       _value = v as T;
     } else {
       throw Exception("ConfigItem: not support type: ${_value.runtimeType}");
@@ -63,12 +63,15 @@ class Config {
 
   static final httpProxy = ConfigItem("http_proxy", "");
 
+  static final leftPanelFlex = ConfigItem("left_panel_flex", 0.3);
+
   static final List<ConfigItem> configs = [
     apiToken,
     apiUrl,
     debugv,
     enabledLanguages,
     httpProxy,
+    leftPanelFlex,
   ];
 
   static Future<void> init() async {
