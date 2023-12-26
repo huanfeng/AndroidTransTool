@@ -48,47 +48,46 @@ class _LogViewState extends State<LogView> {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-        child: Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         Expanded(
-          // 使用SelectableText显示日志信息
           child: SingleChildScrollView(
             controller: _scrollController,
+            padding: const EdgeInsets.all(4.0),
             child: SelectableText(
               logText, // 将日志信息转换成文本
               style: const TextStyle(fontFamily: 'monospace'), // 等宽字体显示日志
             ),
           ),
         ),
-        const Divider(height: 4.0),
-        Padding(
+        const VerticalDivider(width: 4.0),
+        Container(
           padding: const EdgeInsets.all(4.0),
-          child: Row(
+          child: Column(
             children: <Widget>[
-              Expanded(
-                // 日志添加按钮
-                child: ElevatedButton(
-                  onPressed: () {
-                    // 示例: 每次点击按钮，添加当前时间戳到日志
-                    addLogMessage('${DateTime.now()} 测试日志');
-                  },
-                  child: const Text('添加日志'),
-                ),
+              ElevatedButton(
+                onPressed: () {
+                  // 示例: 每次点击按钮，添加当前时间戳到日志
+                  addLogMessage('${DateTime.now()} 测试日志');
+                },
+                onLongPress: () {
+                  addLogMessage(
+                      '这是一条长日志，用于测试日志显示的滚动效果，这是一条长日志，用于测试日志显示的滚动效果，这是一条长日志，用于测试日志显示的滚动效果，这是一条长日志，用于测试日志显示的滚动效果，这是一条长日志，用于测试日志显示的滚动效果，这是一条长日志，用于测试日志显示的滚动效果，这是一条长日志，用于测试日志显示的滚动效果，这是一条长日志，用于测试日志显示的滚动效果');
+                },
+                child: const Text('添加日志'),
               ),
-              Expanded(
-                // 日志添加按钮
-                child: ElevatedButton(
-                  onPressed: () {
-                    clearLog();
-                  },
-                  child: const Text('清除日志'),
-                ),
+              const SizedBox(height: 4.0),
+              ElevatedButton(
+                onPressed: () {
+                  clearLog();
+                },
+                child: const Text('清除日志'),
               ),
             ],
           ),
         ),
       ],
-    ));
+    );
   }
 }

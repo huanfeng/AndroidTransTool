@@ -201,58 +201,9 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  List<Widget> actions() {
-    return [
-      TextButton.icon(
-          icon: const Icon(Icons.file_open),
-          label: const Text("打开项目"),
-          onPressed: () {}),
-      TextButton.icon(
-          icon: const Icon(Icons.settings),
-          label: const Text("项目设置"),
-          onPressed: () {
-            Navigator.pushNamed(context, 'project_setting');
-          }),
-      PopupMenuButton<String>(
-        itemBuilder: (context) {
-          return <PopupMenuEntry<String>>[
-            PopupMenuItem<String>(
-              value: '语文',
-              child: Text('语文'),
-            ),
-            PopupMenuItem<String>(
-              value: '数学',
-              child: Text('数学'),
-            ),
-            PopupMenuItem<String>(
-              value: '英语',
-              child: Text('英语'),
-            ),
-            PopupMenuItem<String>(
-              value: '生物',
-              child: Text('生物'),
-            ),
-            PopupMenuItem<String>(
-              value: '化学',
-              child: Text('化学'),
-            ),
-          ];
-        },
-      ),
-      TextButton.icon(
-          icon: const Icon(Icons.settings_applications),
-          label: const Text("系统设置"),
-          onPressed: () {
-            Navigator.pushNamed(context, 'setting');
-          }),
-      const SizedBox(width: 60),
-    ];
-  }
-
   Widget mainLayout() {
     return SimplePanelLayout(
         left: Container(
-            width: 450,
             decoration: BoxDecoration(
                 color: Theme.of(context)
                     .colorScheme
@@ -339,81 +290,77 @@ class _MyHomePageState extends State<MyHomePage> {
                         })),
               ],
             )),
-        right: Container(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Container(
-                  padding: const EdgeInsets.only(left: 10, right: 10),
-                  height: 40,
-                  child: Row(children: [
-                    TextButton.icon(
-                        icon: const Icon(Icons.language),
-                        label: const Text("一键翻译"),
-                        onPressed: () {}),
-                    TextButton.icon(
-                        icon: const Icon(Icons.select_all),
-                        label: const Text("选中可翻译的语言"),
-                        onPressed: () {
-                          onSelectCanTranslateLanguage();
-                        }),
-                    TextButton.icon(
-                        icon: const Icon(Icons.language),
-                        label: const Text("翻译选中语言"),
-                        onPressed: () {
-                          onTransSelectLanguage();
-                        }),
-                    TextButton.icon(
-                        icon: const Icon(Icons.save),
-                        label: const Text("保存结果(不可恢复,请提前备份)"),
-                        onPressed: () {
-                          saveResult();
-                        }),
-                    TextButton.icon(
-                        icon: const Icon(Icons.bug_report),
-                        label: const Text("测试"),
-                        onPressed: () {
-                          chatCompleteTest(
-                              Config.apiUrl.value, Config.apiToken.value);
-                        }),
-                  ])),
-              Expanded(
-                  child: Scrollbar(
-                      controller: tableVController,
-                      child: Scrollbar(
-                          controller: tableHController,
-                          notificationPredicate: (notify) => notify.depth == 1,
-                          child: SingleChildScrollView(
-                              controller: tableVController,
-                              scrollDirection: Axis.vertical,
-                              child: SingleChildScrollView(
-                                  controller: tableHController,
-                                  scrollDirection: Axis.horizontal,
-                                  child: DataTable(
-                                    showCheckboxColumn: false,
-                                    columnSpacing: 20,
-                                    headingRowColor:
-                                        MaterialStateColor.resolveWith(
-                                            (states) => Theme.of(context)
-                                                .colorScheme
-                                                .primaryContainer),
-                                    headingTextStyle: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onPrimaryContainer,
-                                    ),
-                                    showBottomBorder: true,
-                                    columns: dataColumns(),
-                                    rows: dataRows(),
-                                  ))))))
-            ],
-          ),
+        right: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Container(
+                padding: const EdgeInsets.only(left: 10, right: 10),
+                // height: 40,
+                child: Wrap(children: [
+                  TextButton.icon(
+                      icon: const Icon(Icons.language),
+                      label: const Text("一键翻译"),
+                      onPressed: () {}),
+                  TextButton.icon(
+                      icon: const Icon(Icons.select_all),
+                      label: const Text("选中可翻译的语言"),
+                      onPressed: () {
+                        onSelectCanTranslateLanguage();
+                      }),
+                  TextButton.icon(
+                      icon: const Icon(Icons.language),
+                      label: const Text("翻译选中语言"),
+                      onPressed: () {
+                        onTransSelectLanguage();
+                      }),
+                  TextButton.icon(
+                      icon: const Icon(Icons.save),
+                      label: const Text("保存结果(不可恢复,请提前备份)"),
+                      onPressed: () {
+                        saveResult();
+                      }),
+                  TextButton.icon(
+                      icon: const Icon(Icons.bug_report),
+                      label: const Text("测试"),
+                      onPressed: () {
+                        chatCompleteTest(
+                            Config.apiUrl.value, Config.apiToken.value);
+                      }),
+                ])),
+            Expanded(
+                child: Scrollbar(
+                    controller: tableVController,
+                    child: Scrollbar(
+                        controller: tableHController,
+                        notificationPredicate: (notify) => notify.depth == 1,
+                        child: SingleChildScrollView(
+                            controller: tableVController,
+                            scrollDirection: Axis.vertical,
+                            child: SingleChildScrollView(
+                                controller: tableHController,
+                                scrollDirection: Axis.horizontal,
+                                child: DataTable(
+                                  showCheckboxColumn: false,
+                                  columnSpacing: 20,
+                                  headingRowColor:
+                                      MaterialStateColor.resolveWith(
+                                          (states) => Theme.of(context)
+                                              .colorScheme
+                                              .primaryContainer),
+                                  headingTextStyle: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer,
+                                  ),
+                                  showBottomBorder: true,
+                                  columns: dataColumns(),
+                                  rows: dataRows(),
+                                ))))))
+          ],
         ),
-        bottom: _showLogView
-            ? Container(height: 160, color: Colors.white, child: LogView())
-            : null,
+        bottom: _showLogView ? const LogView() : null,
         statusBar: Container(
             height: 30,
             padding: const EdgeInsets.only(left: 10, right: 10),
@@ -421,12 +368,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 color: Theme.of(context).colorScheme.secondaryContainer),
             alignment: Alignment.centerLeft,
             child: Row(children: [
-              Expanded(child: Text("状态栏")),
-              Expanded(child: Text("状态栏")),
-              Spacer(),
+              const Expanded(child: Text("状态栏")),
+              const VerticalDivider(),
+              const Expanded(child: Text("状态栏")),
+              const Spacer(),
+              const VerticalDivider(),
               Expanded(
                   child: Row(children: [
-                Text("显示日志窗口"),
+                const Text("日志窗口"),
                 Checkbox(
                     value: _showLogView,
                     semanticLabel: "显示日志窗口",

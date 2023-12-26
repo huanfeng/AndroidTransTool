@@ -59,7 +59,7 @@ class _SimplePanelLayoutState extends State<SimplePanelLayout> {
       Expanded(
           child: Row(
         children: [
-          Container(width: leftWidth, child: widget.left),
+          SizedBox(width: leftWidth, child: widget.left),
           MouseRegion(
               cursor: SystemMouseCursors.resizeLeftRight,
               child: GestureDetector(
@@ -119,7 +119,7 @@ class _SimplePanelLayoutState extends State<SimplePanelLayout> {
                   thickness: 2,
                 ))),
       if (widget.bottom != null)
-        Container(height: bottomHeight, child: widget.bottom!),
+        SizedBox(height: bottomHeight, child: widget.bottom!),
       if (widget.statusBar != null) widget.statusBar!,
     ]);
   }
