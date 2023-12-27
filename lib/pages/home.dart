@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../config.dart';
 import '../data/language.dart';
@@ -10,6 +14,7 @@ import '../trans/trans_data.dart';
 import '../utils/picker_utils.dart';
 import '../widgets/logview.dart';
 import '../widgets/panel_layout.dart';
+import 'auto_trans_dialog.dart';
 import 'menu.dart';
 import 'project_setting.dart';
 
@@ -55,6 +60,8 @@ class _MyHomePageState extends State<MyHomePage> {
   final ScrollController tableVController = ScrollController();
   final ScrollController tableHController = ScrollController();
 
+  final MenuEnabledController _menuEnabledController = MenuEnabledController();
+
   @override
   void initState() {
     super.initState();
@@ -69,8 +76,16 @@ class _MyHomePageState extends State<MyHomePage> {
     switch (entry) {
       case MenuEntry.openFolder:
         onOpenProject();
+        break;
       case MenuEntry.settings:
         Navigator.pushNamed(context, 'setting');
+        break;
+      case MenuEntry.autoProject:
+        _menuEnabledController.toggle(MenuEntry.autoRes);
+        break;
+      case MenuEntry.autoRes:
+        _menuEnabledController.toggle(MenuEntry.autoProject);
+        break;
       default:
         break;
     }
@@ -193,7 +208,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [MainMenu(onMenuPressed: onMenuPressed)],
+                    children: [
+                      MainMenu(
+                          onMenuPressed: onMenuPressed,
+                          enabledController: _menuEnabledController)
+                    ],
                   ))
             ]);
           })),
@@ -202,6 +221,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget mainLayout() {
+    final projectDirEmpty = _project.projectDir.isEmpty;
     return SimplePanelLayout(
         left: Container(
             decoration: BoxDecoration(
@@ -211,20 +231,46 @@ class _MyHomePageState extends State<MyHomePage> {
                     .withAlpha(80)),
             child: Column(
               children: [
-                Container(
-                    alignment: Alignment.center,
-                    height: 30,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         const Text(
                           "项目路径: ",
                           style: TextStyle(fontSize: 16),
                         ),
-                        SelectableText(
-                          _project.projectDir,
-                          style: const TextStyle(fontSize: 16),
-                        ),
+                        Tooltip(
+                            waitDuration: const Duration(milliseconds: 500),
+                            message: "左键打开, 右键复制",
+                            child: InkWell(
+                              onTap: projectDirEmpty
+                                  ? null
+                                  : () {
+                                      if (Platform.isWindows) {
+                                        final url = Uri.parse(
+                                            'file:///${_project.projectDir}');
+                                        launchUrl(url);
+                                      }
+                                    },
+                              onSecondaryTap: projectDirEmpty
+                                  ? null
+                                  : () {
+                                      // 创建一个包含要复制的数据的 ClipboardData 对象
+                                      ClipboardData data = ClipboardData(
+                                          text: _project.projectDir);
+                                      // 将数据复制到剪切板
+                                      Clipboard.setData(data);
+                                      showMessage(
+                                          "已复制 ${_project.projectDir} 到剪切板!");
+                                    },
+                              child: Text(_project.projectDir,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Color.fromRGBO(0, 0, 255, 1),
+                                  )),
+                            )),
                       ],
                     )),
                 // const Divider(),
@@ -296,15 +342,47 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             Container(
                 padding: const EdgeInsets.only(left: 10, right: 10),
-                // height: 40,
                 child: Wrap(children: [
+                  MenuAnchor(
+                      menuChildren: <Widget>[
+                        MenuItemButton(
+                          child: const Text("自动翻译当前资源"),
+                          onPressed: () => {},
+                        ),
+                        MenuItemButton(
+                          onPressed: () => {},
+                          child: const Text("自动翻译当前资源并保存"),
+                        ),
+                      ],
+                      builder: (BuildContext context, MenuController controller,
+                          Widget? child) {
+                        return TextButton.icon(
+                          onPressed: () {
+                            if (controller.isOpen) {
+                              controller.close();
+                            } else {
+                              controller.open();
+                            }
+                          },
+                          label: const Text("一键翻译"),
+                          icon: const Icon(Icons.language),
+                        );
+                      }),
                   TextButton.icon(
                       icon: const Icon(Icons.language),
                       label: const Text("一键翻译"),
-                      onPressed: () {}),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          barrierColor: Colors.black26,
+                          builder: (BuildContext context) {
+                            return const AutoTranDialog();
+                          },
+                        );
+                      }),
                   TextButton.icon(
                       icon: const Icon(Icons.select_all),
-                      label: const Text("选中可翻译的语言"),
+                      label: const Text("选中"),
                       onPressed: () {
                         onSelectCanTranslateLanguage();
                       }),
@@ -344,8 +422,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                   showCheckboxColumn: false,
                                   columnSpacing: 20,
                                   headingRowColor:
-                                      MaterialStateColor.resolveWith(
-                                          (states) => Theme.of(context)
+                                      MaterialStateColor.resolveWith((states) =>
+                                          Theme.of(context)
                                               .colorScheme
                                               .primaryContainer),
                                   headingTextStyle: TextStyle(
@@ -386,25 +464,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     })
               ])),
             ])));
-  }
-
-  void testTrans() {
-    final items = [
-      "Car Language",
-      "Auto Start-Stop",
-      "Calibration",
-      "TPMS Calibration State",
-      "TPMS Detection State",
-      "Cleaning fluid"
-    ].indexed.map(((e) {
-      return TransItem(e.$1.toString(), e.$2);
-    })).toList();
-    final request = TransRequest(Language.cnHk, items);
-    _openAI.startTransRequest(request, (resp) {
-      if (resp != null) {
-        log.d("resp=$resp");
-      }
-    });
   }
 
   void onOpenProject() {

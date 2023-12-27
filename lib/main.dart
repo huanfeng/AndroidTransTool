@@ -48,6 +48,22 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  ThemeData _buildTheme() {
+    final data = ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+        // 修改拖动条加宽, 常显示
+        scrollbarTheme: ScrollbarThemeData(
+          thickness: MaterialStateProperty.all(16),
+          thumbVisibility: MaterialStateProperty.all<bool>(true),
+        ));
+    if (kIsWeb) {
+      return data;
+    } else {
+      return data.useSystemChineseFont(Brightness.light);
+    }
+  }
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -61,14 +77,7 @@ class MyApp extends StatelessWidget {
       scrollBehavior: MyCustomScrollBehavior(),
       title: appTitle,
       initialRoute: "/",
-      theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          useMaterial3: true,
-          // 修改拖动条加宽, 常显示
-          scrollbarTheme: ScrollbarThemeData(
-            thickness: MaterialStateProperty.all(16),
-            thumbVisibility: MaterialStateProperty.all<bool>(true),
-          )).useSystemChineseFont(Brightness.light),
+      theme: _buildTheme(),
       routes: {
         "/": (context) => const MyHomePage(title: appTitle), //注册首页路由
         "setting": (context) => const SettingPage(),
