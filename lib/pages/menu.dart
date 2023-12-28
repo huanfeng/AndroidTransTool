@@ -60,8 +60,8 @@ class MenuEnabledController {
 }
 
 class MainMenu extends StatefulWidget {
-  Function(MenuEntry)? onMenuPressed;
-  MenuEnabledController enabledController;
+  final Function(MenuEntry)? onMenuPressed;
+  final MenuEnabledController enabledController;
 
   MainMenu(
       {super.key, this.onMenuPressed, MenuEnabledController? enabledController})
