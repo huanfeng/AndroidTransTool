@@ -4,13 +4,16 @@ import 'package:android_trans_tool/main.dart';
 import 'package:flutter/material.dart';
 
 enum MenuEntry {
-  auto('自动化', isDir: true, icon: Icons.auto_awesome),
-  help('帮助', isDir: true, icon: Icons.help),
+  autoDir('自动化', isDir: true, icon: Icons.auto_awesome),
+  helpDir('帮助', isDir: true, icon: Icons.help),
+  settingDir('设置', isDir: true, icon: Icons.settings),
+  debugDir('调试', isDir: true, icon: Icons.bug_report),
   about('关于', icon: Icons.info),
   openFolder('打开项目', icon: Icons.file_open),
-  settings('设置', icon: Icons.settings_applications),
+  settings('系统设置', icon: Icons.settings_applications),
   autoRes('自动翻译资源...', icon: Icons.list_alt),
   autoProject('自动翻译项目...', icon: Icons.folder_copy),
+  debugTran('测试翻译接口', icon: Icons.translate),
   ;
 
   final String label;
@@ -123,9 +126,11 @@ class _MainMenuState extends State<MainMenu> {
   List<Widget> buildMenuList() {
     return <Widget>[
       _buildItem(MenuEntry.openFolder),
-      _buildSubmenu(MenuEntry.auto, [MenuEntry.autoRes, MenuEntry.autoProject]),
-      _buildItem(MenuEntry.settings),
-      _buildSubmenu(MenuEntry.help, [MenuEntry.about]),
+      _buildSubmenu(
+          MenuEntry.autoDir, [MenuEntry.autoRes, MenuEntry.autoProject]),
+      _buildSubmenu(MenuEntry.settingDir, [MenuEntry.settings]),
+      // _buildSubmenu(MenuEntry.debugDir, [MenuEntry.debugTran]),
+      _buildSubmenu(MenuEntry.helpDir, [MenuEntry.debugTran, MenuEntry.about]),
     ];
   }
 

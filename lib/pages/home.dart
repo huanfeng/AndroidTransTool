@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:logger/logger.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../config.dart';
@@ -29,17 +30,31 @@ class MyHomePage extends StatefulWidget {
 
 class TranslateProgress {
   var working = false;
-  var totalLanguageCount = 0;
-  var currentLanguage = 0;
-  var currentLangTextCount = 0;
-  var currentLangTranslatedCount = 0;
+  Language currentLang = Language.def;
+  var langIndex = 0;
+  var langCount = 0;
+  var textTotalCount = 0;
+  var textTranslatedCount = 0;
 
   void reset() {
     working = false;
-    totalLanguageCount = 0;
-    currentLanguage = 0;
-    currentLangTextCount = 0;
-    currentLangTranslatedCount = 0;
+    langCount = 0;
+    langIndex = 0;
+    textTotalCount = 0;
+    textTranslatedCount = 0;
+  }
+
+  void setLangProgress(Language lang, int index, int count) {
+    currentLang = lang;
+    langIndex = index;
+    langCount = count;
+    textTotalCount = 0;
+    textTranslatedCount = 0;
+  }
+
+  void setTextProgress(int translated, int total) {
+    textTranslatedCount = translated;
+    textTotalCount = total;
   }
 }
 
@@ -47,7 +62,12 @@ class _MyHomePageState extends State<MyHomePage> {
   int selectedResDirIndex = -1;
   int selectedXmlFileIndex = -1;
   int selectedXmlLine = -1;
-  bool _showLogView = false;
+  bool _showLogView = Config.showLogView.value;
+
+  set showLogView(bool value) {
+    _showLogView = value;
+    Config.showLogView.value = value;
+  } // _showLogView 的 setting
 
   final Project _project = Project("New Project");
   final ResDirInfo _currentResInfo = ResDirInfo();
@@ -62,14 +82,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final MenuEnabledController _menuEnabledController = MenuEnabledController();
 
+  final LogController _logController = LogController();
+
   @override
   void initState() {
     super.initState();
+    Logger.addOutputListener(onLog);
   }
 
   @override
   void dispose() {
     super.dispose();
+    Logger.removeOutputListener(onLog);
   }
 
   void onMenuPressed(MenuEntry entry) {
@@ -86,36 +110,18 @@ class _MyHomePageState extends State<MyHomePage> {
       case MenuEntry.autoRes:
         _menuEnabledController.toggle(MenuEntry.autoProject);
         break;
+      case MenuEntry.debugTran:
+        chatCompleteTest(Config.apiUrl.value, Config.apiToken.value);
+        break;
       default:
         break;
     }
   }
 
-  Future<void> _showProjectSettingDialog() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('项目设置'),
-          content: const SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                ProjectSetting(),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('保存'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+  void onLog(OutputEvent event) {
+    if (event.level.value >= Level.info.value) {
+      _logController.addLogs(event.lines);
+    }
   }
 
   List<DataColumn> dataColumns() {
@@ -343,31 +349,31 @@ class _MyHomePageState extends State<MyHomePage> {
             Container(
                 padding: const EdgeInsets.only(left: 10, right: 10),
                 child: Wrap(children: [
-                  MenuAnchor(
-                      menuChildren: <Widget>[
-                        MenuItemButton(
-                          child: const Text("自动翻译当前资源"),
-                          onPressed: () => {},
-                        ),
-                        MenuItemButton(
-                          onPressed: () => {},
-                          child: const Text("自动翻译当前资源并保存"),
-                        ),
-                      ],
-                      builder: (BuildContext context, MenuController controller,
-                          Widget? child) {
-                        return TextButton.icon(
-                          onPressed: () {
-                            if (controller.isOpen) {
-                              controller.close();
-                            } else {
-                              controller.open();
-                            }
-                          },
-                          label: const Text("一键翻译"),
-                          icon: const Icon(Icons.language),
-                        );
-                      }),
+                  // MenuAnchor(
+                  //     menuChildren: <Widget>[
+                  //       MenuItemButton(
+                  //         child: const Text("自动翻译当前资源"),
+                  //         onPressed: () => {},
+                  //       ),
+                  //       MenuItemButton(
+                  //         onPressed: () => {},
+                  //         child: const Text("自动翻译当前资源并保存"),
+                  //       ),
+                  //     ],
+                  //     builder: (BuildContext context, MenuController controller,
+                  //         Widget? child) {
+                  //       return TextButton.icon(
+                  //         onPressed: () {
+                  //           if (controller.isOpen) {
+                  //             controller.close();
+                  //           } else {
+                  //             controller.open();
+                  //           }
+                  //         },
+                  //         label: const Text("一键翻译"),
+                  //         icon: const Icon(Icons.language),
+                  //       );
+                  //     }),
                   TextButton.icon(
                       icon: const Icon(Icons.language),
                       label: const Text("一键翻译"),
@@ -376,7 +382,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           context: context,
                           barrierColor: Colors.black26,
                           builder: (BuildContext context) {
-                            return const AutoTranDialog();
+                            return AutoTransDialog(doAutoTransXml);
                           },
                         );
                       }),
@@ -397,13 +403,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       label: const Text("保存结果(不可恢复,请提前备份)"),
                       onPressed: () {
                         saveResult();
-                      }),
-                  TextButton.icon(
-                      icon: const Icon(Icons.bug_report),
-                      label: const Text("测试"),
-                      onPressed: () {
-                        chatCompleteTest(
-                            Config.apiUrl.value, Config.apiToken.value);
                       }),
                 ])),
             Expanded(
@@ -438,7 +437,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ))))))
           ],
         ),
-        bottom: _showLogView ? const LogView() : null,
+        bottom: _showLogView ? LogView(logController: _logController) : null,
         statusBar: Container(
             height: 30,
             padding: const EdgeInsets.only(left: 10, right: 10),
@@ -459,7 +458,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     semanticLabel: "显示日志窗口",
                     onChanged: (v) {
                       setState(() {
-                        _showLogView = v ?? false;
+                        if (v != null) {
+                          showLogView = v;
+                        }
                       });
                     })
               ])),
@@ -472,6 +473,9 @@ class _MyHomePageState extends State<MyHomePage> {
         cb: (dir) {
           _project.loadFrom(dir);
           _currentResInfo.reset();
+          _xmlData.clear();
+          log.i(
+              "打开项目 [${_project.projectDir}] 找到 [${_project.resDirs.length}] 个资源目录");
           selectedResDirIndex = -1;
           selectedXmlFileIndex = -1;
           setState(() {});
@@ -481,7 +485,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void onTapResDir(int index) {
     if (selectedResDirIndex != index) {
       setState(() {
-        _currentResInfo.load(_project.getResDirPath(index));
+        _currentResInfo.load(_project.projectDir, _project.getResDir(index));
+        log.i(
+            "打开目录 [${_currentResInfo.dir}] 找到 [${_currentResInfo.xmlFileNames.length}] 个资源文件");
         selectedResDirIndex = index;
         selectedXmlFileIndex = -1;
       });
@@ -495,8 +501,8 @@ class _MyHomePageState extends State<MyHomePage> {
       final xmlFileName = _currentResInfo.xmlFileNames.elementAt(index);
       log.d("onTapXmlFile: index=$index, name=$xmlFileName");
       _xmlData.setFileName(xmlFileName);
-      _xmlData.load(_currentResInfo.dir);
-      log.d("onTapXmlFile: load result: ${_xmlData.items.length}");
+      _xmlData.load(_currentResInfo.dirPath);
+      log.i("打开文件 [$xmlFileName] 共 [${_xmlData.items.length}] 个条目");
     });
   }
 
@@ -534,11 +540,11 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> transOneLanguage(Language lang, {bool byUi = false}) async {
     final needList = collectNeedTransItemForLang(lang);
     // log.d("needList=$needList");
+    logProgress((progress) => progress.setTextProgress(0, needList.length));
     if (needList.isEmpty) {
       log.d("[${lang.cnName}] needList is empty");
       if (byUi) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("[${lang.cnName}] 没有需要翻译的内容!")));
+        showMessage("[${lang.cnName}] 没有需要翻译的内容!");
       }
       return;
     }
@@ -546,6 +552,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _openAI.setConfig(Config.apiUrl.value, Config.apiToken.value,
         httpProxy: Config.httpProxy.value);
 
+    var translateCount = 0;
     await _openAI.startTransRequest(req, (event) {
       log.d("onResponse: $event");
       if (event != null) {
@@ -555,6 +562,9 @@ class _MyHomePageState extends State<MyHomePage> {
             transItem.valueMap[lang] = it.dstValue;
           }
         }
+        translateCount += event.items.length;
+        logProgress((progress) =>
+            progress.setTextProgress(translateCount, needList.length));
         setState(() {});
       }
     });
@@ -569,9 +579,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
     final langList = _xmlData.getTranslatedLanguages();
     for (final i in langList) {
-      _xmlData.saveToDir(_currentResInfo.dir, i);
+      _xmlData.saveToDir(_currentResInfo.dirPath, i);
     }
-    _xmlData.load(_currentResInfo.dir);
+    log.i("已保存 ${langList.length} 种语言的翻译结果!");
+    _xmlData.load(_currentResInfo.dirPath);
     setState(() {});
   }
 
@@ -586,37 +597,66 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     final list = _selectedLangs.toList();
-    list.sort((a, b) => a.index.compareTo(b.index));
-    for (final lang in list) {
+    doTranslate(list);
+  }
+
+  Future<void> doTranslate(List<Language> langList) async {
+    langList.sort((a, b) => a.index.compareTo(b.index));
+    for (final lang in langList) {
+      logProgress((progress) => progress.setLangProgress(
+          lang, langList.indexOf(lang), langList.length));
       await transOneLanguage(lang, byUi: true);
     }
+    log.i("翻译结束!");
   }
 
   void showMessage(String msg) {
+    log.i(msg);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  List<Language> getCanTranslateLanguages() {
+    final list = <Language>[];
+    for (final i in Language.supportedLanguages) {
+      if (isLanguageNeedTrans(i)) {
+        list.add(i);
+      }
+    }
+    return list;
   }
 
   // 选择可翻译的语言
   void onSelectCanTranslateLanguage() async {
-    var changed = false;
-    var canTransCount = 0;
-    for (final i in Language.supportedLanguages) {
-      if (isLanguageNeedTrans(i)) {
-        canTransCount++;
-        if (!_selectedLangs.contains(i)) {
-          _selectedLangs.add(i);
-          changed = true;
-        }
-      } else {
-        if (_selectedLangs.contains(i)) {
-          _selectedLangs.remove(i);
-          changed = true;
-        }
-      }
+    final canTransList = getCanTranslateLanguages();
+    _selectedLangs.clear();
+    _selectedLangs.addAll(canTransList);
+    showMessage("已选中${canTransList.length}种可翻译的语言!");
+    setState(() {});
+  }
+
+  void logProgress(Function(TranslateProgress) update) {
+    update(_progress);
+    if (_progress.textTotalCount == 0) {
+      log.i(
+          "语言进度: ${_progress.langIndex + 1}/${_progress.langCount}, 当前语言: ${_progress.currentLang.cnName}");
+    } else {
+      log.i(
+          "语言进度: ${_progress.langIndex + 1}/${_progress.langCount}, 当前语言: ${_progress.currentLang.cnName}, 文本进度: ${_progress.textTranslatedCount}/${_progress.textTotalCount}");
     }
-    showMessage("已选中$canTransCount种可翻译的语言!");
-    if (changed) {
-      setState(() {});
+  }
+
+  void doAutoTransXml(AutoTransConfig config) async {
+    final autoSelect = config.autoSelect;
+    final autoSave = config.autoSave;
+    final langList =
+        autoSelect ? getCanTranslateLanguages() : _selectedLangs.toList();
+    if (langList.isEmpty) {
+      showMessage("没有可翻译的语言!");
+      return;
+    }
+    await doTranslate(langList);
+    if (autoSave) {
+      saveResult();
     }
   }
 }

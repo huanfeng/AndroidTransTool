@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math' as math;
 
 import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
 
 import '../data/language.dart';
 import '../global.dart';
+import '../pages/home.dart';
 import 'trans_data.dart';
 
-void chatCompleteTest(String apiUrl, String apiToken) async {
+typedef TranslateProgressCallback = void Function(TranslateProgress progress);
+
+void chatCompleteTest(String apiUrl, String apiToken,
+    {TranslateProgressCallback? callback}) async {
   final openAI = OpenAI.instance.build(
       token: apiToken,
       apiUrl: apiUrl,
@@ -134,14 +137,14 @@ class OpenAiTrans {
         if (value is String) {
           final item = request.getItem(key);
           if (item != null) {
-            item.dstValue = fixTranslatedText(value);
+            item.dstValue = _fixTranslatedText(value);
             transCount++;
           }
         } else if (value is List) {
           final item = request.getItem(key);
           if (item != null) {
             final list =
-                value.map((e) => fixTranslatedText(e as String)).toList();
+                value.map((e) => _fixTranslatedText(e as String)).toList();
             item.dstValue = list;
             transCount++;
           }
@@ -156,7 +159,7 @@ class OpenAiTrans {
   }
 
   // 修正翻译后的文本
-  String fixTranslatedText(String text) {
+  String _fixTranslatedText(String text) {
     // 目前是将单引号增加转义
     return text.replaceAll("'", "\\'");
   }

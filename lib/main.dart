@@ -25,9 +25,10 @@ bool get isDesktop {
 }
 
 Future<void> main() async {
-  log.d("main: logPath=$logPath");
-
+  // 必须最早初始化, 不然可能会出现依赖问题
   await Config.init();
+
+  log.d("main: logPath=$logPath");
   Config.loadConfig();
 
   WidgetsFlutterBinding.ensureInitialized();

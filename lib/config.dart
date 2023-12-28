@@ -4,11 +4,15 @@ import 'data/language.dart';
 import 'global.dart';
 
 class ConfigItem<T> {
-  ConfigItem(this.key, this.defaultValue) : _value = defaultValue;
+  ConfigItem(this.key, this.defaultValue, {this.onChanged})
+      : _value = defaultValue {
+    load();
+  }
 
   final String key;
   final T defaultValue;
   T _value;
+  final Function(T)? onChanged;
 
   T get value => _value;
 
@@ -49,15 +53,29 @@ class ConfigItem<T> {
     } else {
       throw Exception("ConfigItem: not support type: ${_value.runtimeType}");
     }
+    if (onChanged != null) {
+      onChanged!(_value);
+    }
+    log.t("load: $key=$_value");
   }
 }
 
 class Config {
   static late SharedPreferences gPrefs;
 
+  // static final List<ConfigItem> configs = [
+  //   debugv,
+  //   apiToken,
+  //   apiUrl,
+  //   enabledLanguages,
+  //   httpProxy,
+  //   leftPanelFlex,
+  //   showLogView,
+  // ];
+
+  static final debugv = ConfigItem("debugv", false);
   static final apiToken = ConfigItem("api_token", "");
   static final apiUrl = ConfigItem("apiUrl", "");
-  static final debugv = ConfigItem("debugv", false);
   static final enabledLanguages = ConfigItem("enable_language",
       Language.supportedLanguages.map((e) => e.code).toList());
 
@@ -66,25 +84,21 @@ class Config {
   static final leftPanelFlex = ConfigItem("left_panel_flex", 0.3);
   static final bottomPanelFlex = ConfigItem("bottom_panel_flex", 0.2);
 
-  static final List<ConfigItem> configs = [
-    apiToken,
-    apiUrl,
-    debugv,
-    enabledLanguages,
-    httpProxy,
-    leftPanelFlex,
-  ];
+  static final showLogView = ConfigItem("show_log_view", false);
 
   static Future<void> init() async {
     gPrefs = await SharedPreferences.getInstance();
   }
 
   static void loadConfig() {
-    log.i("loadConfig start: item.size=${configs.length}");
+// log.i("loadConfig start: item.size=${configs.length}");
+    log.i("loadConfig start: configLogLevel=${configLogLevel.value}");
 
-    for (final item in configs) {
-      item.load();
-      log.i("loadConfig: ${item.key}=${item.value}");
-    }
+// for (final item in configs) {
+//   item.load();
+//   if (debugv.value) {
+//     log.i("loadConfig: ${item.key}=${item.value}");
+//   }
+// }
   }
 }

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as path;
 
+import '../config.dart';
 import '../global.dart';
 
 const valuesDirName = "values";
@@ -59,7 +60,9 @@ class Project {
         final relPath = path.relative(element, from: dir);
         resDirs.add(relPath);
       }
-      log.d("scanResult: resDirs=$resDirs");
+      if (Config.debugv.value) {
+        log.d("scanResult: resDirs=$resDirs");
+      }
     }
   }
 
@@ -69,22 +72,33 @@ class Project {
     }
     return path.join(projectDir, resDirs[index]);
   }
+
+  String getResDir(int index) {
+    if (index < 0 || index >= resDirs.length) {
+      return "";
+    }
+    return resDirs[index];
+  }
 }
 
 class ResDirInfo {
+  String parent = "";
   String dir = "";
+  String dirPath = "";
   Set<String> xmlFileNames = {};
 
   @override
   String toString() {
-    return 'ResDirInfo{dir: $dir}';
+    return 'ResDirInfo{parent: $parent, dir: $dir}';
   }
 
-  void load(String resDir) {
-    dir = resDir;
+  void load(String parent, String dir) {
+    this.parent = parent;
+    this.dir = dir;
+    dirPath = path.join(parent, dir);
     xmlFileNames.clear();
 
-    scanResValuesDir(resDir);
+    scanResValuesDir(dirPath);
   }
 
   void scanResValuesDir(String dir) {

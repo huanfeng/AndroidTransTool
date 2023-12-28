@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 
-class AutoTranDialog extends StatefulWidget {
-  const AutoTranDialog({super.key});
+typedef OnAutoTransCallback = void Function(AutoTransConfig config);
 
-  @override
-  State<AutoTranDialog> createState() => _AutoTranDialogState();
+class AutoTransConfig {
+  var autoSelect = true;
+  var autoSave = true;
 }
 
-class _AutoTranDialogState extends State<AutoTranDialog> {
-  var _autoSelect = true;
-  var _autoSave = true;
+class AutoTransDialog extends StatefulWidget {
+  final OnAutoTransCallback callback;
+
+  const AutoTransDialog(this.callback, {super.key});
+
+  @override
+  State<AutoTransDialog> createState() => _AutoTransDialogState();
+}
+
+class _AutoTransDialogState extends State<AutoTransDialog> {
+  final _config = AutoTransConfig();
 
   @override
   Widget build(BuildContext context) {
@@ -19,19 +27,19 @@ class _AutoTranDialogState extends State<AutoTranDialog> {
         child: ListBody(
           children: <Widget>[
             CheckboxListTile(
-                value: _autoSelect,
+                value: _config.autoSelect,
                 title: const Text('自动选中语言'),
                 onChanged: (value) {
                   setState(() {
-                    _autoSelect = value!;
+                    _config.autoSelect = value!;
                   });
                 }),
             CheckboxListTile(
-                value: _autoSave,
+                value: _config.autoSave,
                 title: const Text('自动保存'),
                 onChanged: (value) {
                   setState(() {
-                    _autoSave = value!;
+                    _config.autoSave = value!;
                   });
                 }),
           ],
@@ -39,14 +47,15 @@ class _AutoTranDialogState extends State<AutoTranDialog> {
       ),
       actions: <Widget>[
         TextButton(
-          child: Text('取消'),
+          child: const Text('取消'),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
         TextButton(
-          child: Text('开始'),
+          child: const Text('开始'),
           onPressed: () {
+            widget.callback(_config);
             Navigator.of(context).pop();
           },
         ),
