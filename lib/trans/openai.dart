@@ -117,7 +117,7 @@ class OpenAiTrans {
         maxToken: 4000,
         topP: 0.8,
         model: GptTurbo1106Model(),
-        responseFormat: ResponseFormat(type: "json_object"));
+        responseFormat: ResponseFormat.jsonObject);
     final openAi = _ensureOpenAi();
     final response = await openAi.onChatCompletion(request: chat);
     if (response == null) {
