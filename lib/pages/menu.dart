@@ -74,7 +74,7 @@ class MainMenu extends StatefulWidget {
 class _MainMenuState extends State<MainMenu> {
   final MenuController _menuController = MenuController();
 
-  _MainMenuState() {}
+  _MainMenuState();
 
   @override
   void initState() {
@@ -138,8 +138,8 @@ class _MainMenuState extends State<MainMenu> {
   Widget build(BuildContext context) {
     return MenuBar(
       style: MenuStyle(
-        backgroundColor: MaterialStateColor.resolveWith(
-            (states) => Theme.of(context).colorScheme.background),
+        backgroundColor: WidgetStateColor.resolveWith(
+            (states) => Theme.of(context).colorScheme.surface),
       ),
       controller: _menuController,
       children: buildMenuList(),

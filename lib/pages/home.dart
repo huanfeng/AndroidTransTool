@@ -17,7 +17,6 @@ import '../widgets/logview.dart';
 import '../widgets/panel_layout.dart';
 import 'auto_trans_dialog.dart';
 import 'menu.dart';
-import 'project_setting.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -421,7 +420,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   showCheckboxColumn: false,
                                   columnSpacing: 20,
                                   headingRowColor:
-                                      MaterialStateColor.resolveWith((states) =>
+                                      WidgetStateColor.resolveWith((states) =>
                                           Theme.of(context)
                                               .colorScheme
                                               .primaryContainer),

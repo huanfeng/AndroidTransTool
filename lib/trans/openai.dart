@@ -23,7 +23,7 @@ void chatCompleteTest(String apiUrl, String apiToken,
         Messages(
             role: Role.user,
             content:
-                "Hello! Please translate follow text into Chinese in json object with key zh-rCN: Hello!\nWorld!\nYou need sleep")
+                "Hello! Please translate follow text into Chinese in json object with key zh-rCN: Hello!\nWorld!\nYou need sleep").toJson()
       ],
       maxToken: 200,
       model: GptTurbo1106Model(),
@@ -111,8 +111,8 @@ class OpenAiTrans {
         messages: [
           Messages(
               role: Role.system,
-              content: TransPromote.getTransPromote(request.targetLang)),
-          Messages(role: Role.user, content: request.toJson())
+              content: TransPromote.getTransPromote(request.targetLang)).toJson(),
+          Messages(role: Role.user, content: request.toJson()).toJson()
         ],
         maxToken: 4000,
         topP: 0.8,

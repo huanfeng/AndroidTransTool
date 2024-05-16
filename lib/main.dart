@@ -55,8 +55,8 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         // 修改拖动条加宽, 常显示
         scrollbarTheme: ScrollbarThemeData(
-          thickness: MaterialStateProperty.all(16),
-          thumbVisibility: MaterialStateProperty.all<bool>(true),
+          thickness: WidgetStateProperty.all(16),
+          thumbVisibility: WidgetStateProperty.all<bool>(true),
         ));
     if (kIsWeb) {
       return data;
