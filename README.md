@@ -1,16 +1,8 @@
 # android_trans_tool
 
-Android string res translate tool
+安卓资源翻译工具
 
-## Getting Started
+## 开始
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+通过 ChatGPT 的 JsonMode 来让 GPT 强制返回合法的 json 格式回复, 以达到稳定的翻译目的.
+目前默认为 gpt-3.5-turbo-1106 的模型, 只要支持 JsonMode 的模型原则上都可以正常工作.
