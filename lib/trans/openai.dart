@@ -21,9 +21,10 @@ void chatCompleteTest(String apiUrl, String apiToken,
   final request = ChatCompleteText(
       messages: [
         Messages(
-            role: Role.user,
-            content:
-                "Hello! Please translate follow text into Chinese in json object with key zh-rCN: Hello!\nWorld!\nYou need sleep").toJson()
+                role: Role.user,
+                content:
+                    "Hello! Please translate follow text into Chinese in json object with key zh-rCN: Hello!\nWorld!\nYou need sleep")
+            .toJson()
       ],
       maxToken: 200,
       model: GptTurbo1106Model(),
@@ -31,7 +32,7 @@ void chatCompleteTest(String apiUrl, String apiToken,
 
   final response = await openAI.onChatCompletion(request: request);
   for (var element in response!.choices) {
-    print("data -> ${element.message?.content}");
+    log.i("data -> ${element.message?.content}");
   }
 }
 
@@ -110,8 +111,9 @@ class OpenAiTrans {
     final chat = ChatCompleteText(
         messages: [
           Messages(
-              role: Role.system,
-              content: TransPromote.getTransPromote(request.targetLang)).toJson(),
+                  role: Role.system,
+                  content: TransPromote.getTransPromote(request.targetLang))
+              .toJson(),
           Messages(role: Role.user, content: request.toJson()).toJson()
         ],
         maxToken: 4000,
