@@ -27,7 +27,7 @@ void chatCompleteTest(String apiUrl, String apiToken,
             .toJson()
       ],
       maxToken: 200,
-      model: GptTurbo1106Model(),
+      model: Gpt4oMiniChatModel(),
       responseFormat: ResponseFormat(type: "json_object"));
 
   final response = await openAI.onChatCompletion(request: request);
@@ -118,7 +118,7 @@ class OpenAiTrans {
         ],
         maxToken: 4000,
         topP: 0.8,
-        model: GptTurbo1106Model(),
+        model: Gpt4oMiniChatModel(),
         responseFormat: ResponseFormat.jsonObject);
     final openAi = _ensureOpenAi();
     final response = await openAi.onChatCompletion(request: chat);
