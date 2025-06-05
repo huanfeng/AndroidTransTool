@@ -13,9 +13,9 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  file_picker: ^8.0.3
+  file_picker: ^10.1.9
   chinese_font_library: ^1.2.0
-  window_manager: ^0.4.2
+  window_manager: ^0.5.0
   shared_preferences: ^2.2.3
   path: ^1.9.0
   xml: ^6.5.0
@@ -28,7 +28,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
