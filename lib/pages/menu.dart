@@ -13,7 +13,6 @@ enum MenuEntry {
   openFolder('打开项目', icon: Icons.file_open),
   autoRes('自动翻译资源...', icon: Icons.list_alt),
   autoProject('自动翻译项目...', icon: Icons.folder_copy),
-  debugTran('测试翻译接口', icon: Icons.translate),
   ;
 
   final String label;
@@ -130,7 +129,7 @@ class _MainMenuState extends State<MainMenu> {
       _buildSubmenu(
           MenuEntry.autoDir, [MenuEntry.autoRes, MenuEntry.autoProject]),
       // _buildSubmenu(MenuEntry.debugDir, [MenuEntry.debugTran]),
-      _buildSubmenu(MenuEntry.helpDir, [MenuEntry.debugTran, MenuEntry.about]),
+      _buildSubmenu(MenuEntry.helpDir, [MenuEntry.about]),
     ];
   }
 

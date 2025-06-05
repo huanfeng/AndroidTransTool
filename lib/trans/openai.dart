@@ -8,33 +8,85 @@ import '../global.dart';
 import '../pages/home.dart';
 import 'trans_data.dart';
 
+/// API测试结果类
+class TestResult {
+  final bool success;     // 测试是否成功
+  final String message;   // 结果消息或错误信息
+  final String? content;  // 翻译内容(JSON格式)
+  final int? elapsedMs;   // 测试耗时(毫秒)
+
+  TestResult({
+    required this.success,
+    required this.message,
+    this.content,
+    this.elapsedMs,
+  });
+
+  @override
+  String toString() => success 
+      ? "测试成功：$message (${elapsedMs}ms)\n$content" 
+      : "测试失败：$message";
+}
+
 typedef TranslateProgressCallback = void Function(TranslateProgress progress);
 
-void chatCompleteTest(String apiUrl, String apiToken,
+/// 测试翻译API连接
+/// 
+/// 返回测试结果，包含成功/失败状态和翻译内容
+Future<TestResult> chatCompleteTest(String apiUrl, String apiToken,
     {String? httpProxy, TranslateProgressCallback? callback}) async {
-  final openAI = OpenAI.instance.build(
-      token: apiToken,
-      apiUrl: apiUrl,
-      baseOption: HttpSetup(
-          receiveTimeout: const Duration(seconds: 10),
-          proxy: httpProxy != null && httpProxy.isNotEmpty ? "PROXY $httpProxy" : ""),
-      enableLog: true);
+  final stopwatch = Stopwatch()..start();
+  try {
+    final openAI = OpenAI.instance.build(
+        token: apiToken,
+        apiUrl: apiUrl,
+        baseOption: HttpSetup(
+            receiveTimeout: const Duration(seconds: 15),
+            proxy: httpProxy != null && httpProxy.isNotEmpty ? "PROXY $httpProxy" : ""),
+        enableLog: true);
 
-  final request = ChatCompleteText(
-      messages: [
-        Messages(
-                role: Role.user,
-                content:
-                    "Hello! Please translate follow text into Chinese in json object with key zh-rCN: Hello!\nWorld!\nYou need sleep")
-            .toJson()
-      ],
-      maxToken: 200,
-      model: Gpt4oMiniChatModel(),
-      responseFormat: ResponseFormat(type: "json_object"));
+    final request = ChatCompleteText(
+        messages: [
+          Messages(
+                  role: Role.user,
+                  content:
+                      "Hello! Please translate follow text into Chinese in json object with key zh-rCN: Hello!\nWorld!\nYou need sleep")
+              .toJson()
+        ],
+        maxToken: 200,
+        model: Gpt4oMiniChatModel(),
+        responseFormat: ResponseFormat(type: "json_object"));
 
-  final response = await openAI.onChatCompletion(request: request);
-  for (var element in response!.choices) {
-    log.i("data -> ${element.message?.content}");
+    log.i("开始测试API连接...");
+    
+    final response = await openAI.onChatCompletion(request: request);
+    stopwatch.stop();
+    
+    if (response == null || response.choices.isEmpty) {
+      log.w("API响应为空");
+      return TestResult(
+        success: false,
+        message: "API响应为空，请检查API配置",
+      );
+    }
+    
+    final content = response.choices.first.message?.content;
+    log.i("测试完成: ${stopwatch.elapsedMilliseconds}ms, 内容: $content");
+    
+    return TestResult(
+      success: true,
+      message: "API连接测试成功", 
+      content: content,
+      elapsedMs: stopwatch.elapsedMilliseconds,
+    );
+  } catch (e) {
+    stopwatch.stop();
+    log.e("测试API连接失败: $e");
+    return TestResult(
+      success: false,
+      message: "连接失败: ${e.toString()}",
+      elapsedMs: stopwatch.elapsedMilliseconds,
+    );
   }
 }
 

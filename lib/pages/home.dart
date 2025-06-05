@@ -110,9 +110,6 @@ class _MyHomePageState extends State<MyHomePage> {
       case MenuEntry.autoRes:
         _menuEnabledController.toggle(MenuEntry.autoProject);
         break;
-      case MenuEntry.debugTran:
-        chatCompleteTest(Config.apiUrl.value, Config.apiToken.value);
-        break;
       default:
         break;
     }
@@ -420,11 +417,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                 child: DataTable(
                                   showCheckboxColumn: false,
                                   columnSpacing: 20,
-                                  headingRowColor:
-                                      WidgetStateColor.resolveWith((states) =>
-                                          Theme.of(context)
-                                              .colorScheme
-                                              .primaryContainer),
+                                  headingRowColor: WidgetStateColor.resolveWith(
+                                      (states) => Theme.of(context)
+                                          .colorScheme
+                                          .primaryContainer),
                                   headingTextStyle: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Theme.of(context)
