@@ -8,7 +8,6 @@ import 'config.dart';
 import 'global.dart';
 import 'pages/home.dart';
 import 'pages/project_setting.dart';
-import 'pages/settings.dart';
 import 'utils/touch_utils.dart';
 
 const appVersion = "V0.1";
@@ -81,7 +80,6 @@ class MyApp extends StatelessWidget {
       theme: _buildTheme(),
       routes: {
         "/": (context) => const MyHomePage(title: appTitle), //注册首页路由
-        "setting": (context) => const SettingPage(),
         "project_setting": (context) => const ProjectSettingPage(),
       },
     );

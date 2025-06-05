@@ -11,11 +11,13 @@ import 'trans_data.dart';
 typedef TranslateProgressCallback = void Function(TranslateProgress progress);
 
 void chatCompleteTest(String apiUrl, String apiToken,
-    {TranslateProgressCallback? callback}) async {
+    {String? httpProxy, TranslateProgressCallback? callback}) async {
   final openAI = OpenAI.instance.build(
       token: apiToken,
       apiUrl: apiUrl,
-      baseOption: HttpSetup(receiveTimeout: const Duration(seconds: 10)),
+      baseOption: HttpSetup(
+          receiveTimeout: const Duration(seconds: 10),
+          proxy: httpProxy != null && httpProxy.isNotEmpty ? "PROXY $httpProxy" : ""),
       enableLog: true);
 
   final request = ChatCompleteText(

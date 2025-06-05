@@ -153,7 +153,7 @@ class XmlData {
     log.d("load: resDir=$resDir, fileName=$fileName");
 
     // 需要保证 valuesDirs 的顺序, 默认的需要在最前, 不然会影响生成后的顺序
-    for (final lang in Language.supportedLanguages) {
+    for (final lang in Language.getEnabledLanguages()) {
       _loadOneDir(resDir, lang.valuesDirName);
     }
   }

@@ -17,6 +17,7 @@ import '../widgets/logview.dart';
 import '../widgets/panel_layout.dart';
 import 'auto_trans_dialog.dart';
 import 'menu.dart';
+import 'settings_dialog.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -101,7 +102,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onOpenProject();
         break;
       case MenuEntry.settings:
-        Navigator.pushNamed(context, 'setting');
+        showSettingsDialog(context); // 使用弹窗替代页面跳转
         break;
       case MenuEntry.autoProject:
         _menuEnabledController.toggle(MenuEntry.autoRes);
@@ -130,7 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
       const DataColumn(label: Text('可翻译')),
     ];
 
-    for (var lang in Language.supportedLanguages) {
+    for (var lang in Language.getEnabledLanguages()) {
       list.add(DataColumn(
           label: Row(children: [
         Text(lang.cnTitle),
@@ -167,7 +168,7 @@ class _MyHomePageState extends State<MyHomePage> {
           constraints: const BoxConstraints(maxWidth: 30),
           child: Text(it.translatable ? "yes" : "no"))));
       final transIt = _xmlData.getTranslatedItem(it.name);
-      for (var lang in Language.supportedLanguages) {
+      for (var lang in Language.getEnabledLanguages()) {
         final v = it.valueMap[lang]?.toString() ?? "";
         final transV =
             transIt != null ? transIt.valueMap[lang]?.toString() : null;
@@ -616,7 +617,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<Language> getCanTranslateLanguages() {
     final list = <Language>[];
-    for (final i in Language.supportedLanguages) {
+    for (final i in Language.getEnabledLanguages()) {
       if (isLanguageNeedTrans(i)) {
         list.add(i);
       }

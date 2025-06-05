@@ -1,3 +1,5 @@
+import '../config.dart';
+
 enum Language {
   def("", "默认(英文)", "Default(English)"),
   cn("zh-rCN", "简体中文", "Simplified Chinese"),
@@ -12,6 +14,7 @@ enum Language {
   ja("ja", "日语", "Japanese"),
   ko("ko", "韩语", "Korean"),
   ru("ru", "俄语", "Russian"),
+  uk("uk", "乌克兰语", "Ukrainian"),
   ;
 
   final String code;
@@ -64,5 +67,35 @@ enum Language {
     Language.ja,
     Language.ko,
     Language.ru,
+    Language.uk,
   ];
+
+  // 获取用户启用的语言列表
+  static List<Language> getEnabledLanguages() {
+    // 始终包含默认语言
+    final result = <Language>[Language.def];
+
+    // 从配置文件读取启用的语言代码列表
+    try {
+      final enabledCodes = Config.enabledLanguages.value;
+      // 将语言代码转换为 Language 对象
+      for (final code in enabledCodes) {
+        if (code.isEmpty) continue; // 跳过默认语言，因为前面已经添加
+        final language = Language.fromCode(code);
+        if (language != null) {
+          result.add(language);
+        }
+      }
+    } catch (e) {
+      // 错误情况下返回默认的支持语言列表
+      return supportedLanguages;
+    }
+
+    // 如果没有启用任何语言，返回默认的支持语言列表
+    if (result.length <= 1) {
+      return supportedLanguages;
+    }
+
+    return result;
+  }
 }
