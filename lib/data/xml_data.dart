@@ -36,7 +36,7 @@ abstract class ResItem<T> {
 }
 
 class StringItem extends ResItem<String> {
-  StringItem(name, {translatable = true})
+  StringItem(String name, {bool translatable = true})
       : super(typeString, name, translatable: translatable);
 
   @override
@@ -49,7 +49,7 @@ class StringItem extends ResItem<String> {
 }
 
 class ArrayItem extends ResItem<List<String>> {
-  ArrayItem(name, {translatable = true})
+  ArrayItem(String name, {bool translatable = true})
       : super(typeStringArray, name, translatable: translatable);
 
   @override
