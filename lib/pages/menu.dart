@@ -1,7 +1,8 @@
 import 'dart:collection';
 
-import 'package:android_trans_tool/main.dart';
 import 'package:flutter/material.dart';
+
+import '../main.dart';
 
 enum MenuEntry {
   autoDir('自动化', isDir: true, icon: Icons.auto_awesome),
@@ -91,7 +92,7 @@ class _MainMenuState extends State<MainMenu> {
     showAboutDialog(
       context: context,
       applicationName: appName,
-      applicationVersion: appVersion,
+      applicationVersion: appTitle.replaceFirst("$appName V", ""),
     );
   }
 

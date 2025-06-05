@@ -2,6 +2,7 @@ import 'package:chinese_font_library/chinese_font_library.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'config.dart';
@@ -10,9 +11,8 @@ import 'pages/home.dart';
 import 'pages/project_setting.dart';
 import 'utils/touch_utils.dart';
 
-const appVersion = "V0.1";
 const appName = "Android Trans Tool";
-const appTitle = "$appName $appVersion";
+String appTitle = appName;
 
 bool get isDesktop {
   if (kIsWeb) return false;
@@ -23,9 +23,26 @@ bool get isDesktop {
   ].contains(defaultTargetPlatform);
 }
 
+// 初始化应用版本
+Future<void> initAppVersion() async {
+  try {
+    // 读取应用信息
+    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    final String version = packageInfo.version;
+    // 更新应用标题
+    appTitle = "$appName v$version";
+  } catch (e) {
+    // 使用默认标题
+    appTitle = "$appName v1.0.0";
+  }
+}
+
 Future<void> main() async {
   // 必须最早初始化, 不然可能会出现依赖问题
   await Config.init();
+
+  // 初始化版本信息
+  await initAppVersion();
 
   log.d("main: logPath=$logPath");
   Config.loadConfig();
@@ -79,7 +96,7 @@ class MyApp extends StatelessWidget {
       initialRoute: "/",
       theme: _buildTheme(),
       routes: {
-        "/": (context) => const MyHomePage(title: appTitle), //注册首页路由
+        "/": (context) => MyHomePage(title: appTitle), //注册首页路由
         "project_setting": (context) => const ProjectSettingPage(),
       },
     );
